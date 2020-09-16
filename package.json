@@ -1,0 +1,22 @@
+{
+  "name": "@ryunosuke/assetter",
+  "version": "0.0.1",
+  "description": "asset server",
+  "author": "ryunosuke",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/core": "*",
+    "@babel/preset-env": "*",
+    "node-sass": "*",
+    "express": "*",
+    "multer": "*",
+    "chokidar": "*"
+  },
+  "devDependencies": {
+    "jest": "*"
+  },
+  "scripts": {
+    "test": "jest"
+  }
+}
