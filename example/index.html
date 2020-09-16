@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8"/>
+    <title>asseter</title>
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    <link rel="stylesheet" href="./style/sample.css">
+    <script src="https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.7/runtime.js"></script>
+    <script src="./script/sample.js"></script>
+</head>
+<body>
+hello
+<div>world</div>
+<br>
+<a id="post" href="javascript:void(0)">POST</a>
+<input id="file" name="postfile" type="file" accept=".scss,.css" multiple>
+
+<script>
+    document.querySelector('#post').addEventListener('click', function () {
+        const file = document.querySelector('#file');
+        if (file.files.length === 0) {
+            return alert('no file');
+        }
+
+        const formData = new FormData();
+        Array.from(file.files).forEach(function (f) {
+            formData.append(file.name, f);
+        })
+
+        fetch('./post.css', {
+            method: 'POST',
+            body: formData,
+        });
+    });
+</script>
+
+</body>
+</html>
