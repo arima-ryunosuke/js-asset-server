@@ -17,8 +17,6 @@ module.exports = function (config) {
         maps: {
             "/path/to/relative": "fullpath",
         },
-        // appendix compiler. see transpile.js
-        compilers: {},
         // log level: ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR']
         loglevel: 'INFO',
     }, config);

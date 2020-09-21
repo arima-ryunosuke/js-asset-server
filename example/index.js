@@ -8,6 +8,6 @@ const config = {
     },
 };
 
-const daemon = require('../index');
-daemon.httpd(config);
-daemon.fsd(config);
+const assetter = require('../index');
+assetter.httpd(config);
+assetter.fsd(config);

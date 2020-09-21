@@ -1,7 +1,8 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const transpile = require('../src/transpile');
+const transpiler = require('../src/transpiler');
+const transpile = transpiler.transpile;
 const workdir = os.tmpdir() + '/.assetter-test';
 const options = {
     rootdir: workdir,
@@ -21,6 +22,27 @@ const options = {
 };
 
 fs.mkdirSync(workdir, {recursive: true});
+
+test('register', async () => {
+    const input = workdir + '/custom.txt';
+    fs.writeFileSync(input, 'html{body{color:red}}');
+    transpiler.regsiter('.txt', {
+        callback: function (value) {
+            value.content = value.content.replace('body', 'BODY');
+        },
+    }, '.scss');
+    expect(transpiler.getAltfile(workdir + '/custom.css')).toEqual(path.resolve(input));
+    const result = await transpile(input, Object.assign({}, options, {}));
+    expect(result.filename).toEqual(path.resolve(workdir + '/custom.css'));
+    expect(result.content).toEqual(`html BODY {
+  color: red;
+}
+
+/*# sourceMappingURL=custom.css.map */`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/custom.css.map'));
+    expect(result.mapping.sources).toEqual(['/.assetter-test/custom.txt']);
+});
+
 
 test('compile scss', async () => {
     const input = workdir + '/test.scss';

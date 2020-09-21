@@ -3,7 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const url = require('url');
 
-const transpile = require('../src/transpile');
+const transpiler = require('../src/transpiler');
 
 module.exports = function (config) {
     const options = require('../src/configure')(config);
@@ -59,19 +59,10 @@ module.exports = function (config) {
         router.get('/*', function (req, res, next) {
             return async function () {
                 const reqfile = path.join(rootdir, req.path);
-                const parts = path.parse(reqfile);
-                const minified = parts.name.endsWith(".min");
-                const alts = {
-                    '.css': ['.sass', '.scss', ...(minified ? parts.ext : [])],
-                    '.js': ['.es', 'es6', ...(minified ? parts.ext : [])],
-                }[parts.ext] || [];
-
-                const basename = path.join(parts.dir, path.basename(parts.name, '.min'));
-                const alt = alts.find(alt => fs.existsSync(basename + alt));
-                if (alt) {
-                    const altfile = basename + alt;
+                const altfile = transpiler.getAltfile(reqfile);
+                if (altfile) {
                     if (req.nocache || ((await fs.promises.mtime(reqfile)) < (await fs.promises.mtime(altfile)))) {
-                        await transpile(altfile, Object.assign({}, options, {
+                        await transpiler.transpile(altfile, Object.assign({}, options, {
                             rootdir: rootdir,
                             localdir: local,
                             outfile: reqfile,
@@ -100,7 +91,7 @@ module.exports = function (config) {
                     }
                 }
                 if (alt) {
-                    await transpile(altfiles, Object.assign({}, options, {
+                    await transpiler.transpile(altfiles, Object.assign({}, options, {
                         rootdir: rootdir,
                         localdir: local,
                         outfile: reqfile,

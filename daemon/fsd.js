@@ -1,7 +1,7 @@
 const {fs, path, logger} = require('../src/util');
 const chokidar = require('chokidar');
 
-const transpile = require('../src/transpile');
+const transpiler = require('../src/transpiler');
 
 module.exports = function (config) {
     const options = require('../src/configure')(config);
@@ -14,8 +14,8 @@ module.exports = function (config) {
             ignored: /(^|[\/\\])\../,
             persistent: true,
         }).on('all', (eventName, path) => {
-            if (['add', 'change'].includes(eventName)) {
-                transpile(path, Object.assign({}, options, {
+            if (['add', 'change'].includes(eventName) && transpiler.canTranspile(path)) {
+                transpiler.transpile(path, Object.assign({}, options, {
                     rootdir: rootdir,
                     localdir: localdir,
                 })).catch(e => console.error(e));

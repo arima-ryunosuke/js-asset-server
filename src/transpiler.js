@@ -2,7 +2,7 @@ const {fs, path} = require('./util');
 const util = require('util');
 
 const compilers = new function () {
-    this['.css'] = this['.sass'] = this['.scss'] = {
+    this['.css'] = {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`.replace(/\\/g, '/'),
         compile: async function (input, options) {
@@ -24,7 +24,9 @@ const compilers = new function () {
         },
         callback: null,
     };
-    this['.js'] = this['.es'] = this['.es6'] = {
+    this['.sass'] = this['.scss'] = this['.css'];
+
+    this['.js'] = {
         ext: '.js',
         mappingURL: url => `\n//# sourceMappingURL=${url}`.replace(/\\/g, '/'),
         compile: async function (input, options) {
@@ -61,22 +63,43 @@ const compilers = new function () {
         },
         callback: null,
     };
+    this['.es'] = this['.es6'] = this['.js'];
 };
 
-const defaultOptions = {
-    compilers: compilers,   // see above
-    maps: "",               // "": same location, string: specify relative, true: data URI, false: no map file, object: see code
-    outfile: null,          // output filename (null: same direcotry)
-    minified: false,        // true: minify, false: human readable, null: auto detect by outfile
-    nocache: false,         // true: nouse cache file
-    nowrite: false,         // true: nowriting file
-    logger: console,        // logger instance
+module.exports.regsiter = function (altext, compiler, similar = null) {
+    compilers[altext] = Object.assign({}, compilers[similar || altext] || {}, compiler);
+};
+
+module.exports.getAltfile = function (filename, forced = false) {
+    const parts = path.parse(filename);
+    const basename = path.join(parts.dir, path.basename(parts.name, '.min'));
+    const minified = forced || parts.name.endsWith('.min');
+
+    const alts = Object.entries(compilers)
+        .filter(entry => parts.ext === entry[1].ext)
+        .sort((a, b) => a[1].ext === b[0] ? -1 : 1)
+        .map(entry => entry[0])
+        .filter(ext => minified || ext !== parts.ext)
+    ;
+
+    const alt = alts.find(alt => fs.existsSync(basename + alt));
+    return alt ? basename + alt : null;
+};
+
+module.exports.canTranspile = function (filename) {
+    const parts = path.parse(filename);
+
+    const alts = Object.entries(compilers)
+        .filter(entry => entry[0] !== entry[1].ext)
+        .map(entry => entry[0])
+    ;
+    return alts.includes(parts.ext);
 };
 
 const transpile = async function (altfile, options) {
     altfile = path.resolve(altfile);
     const parts = path.parse(altfile);
-    const compiler = options.compilers[parts.ext] || {};
+    const compiler = compilers[parts.ext] || {};
     const outfile = path.resolve(options.outfile || path.changeExt(altfile, (options.minified ? '.min' : '') + compiler.ext));
     const cachefile = path.join(options.tmpdir, 'assetter', 'transpiled', altfile.replace(':', ';') + '.min-' + options.minified + '.json');
 
@@ -127,12 +150,15 @@ const transpile = async function (altfile, options) {
     });
 };
 
-module.exports = async function (altfile, options = {}) {
-    options = Object.assign({}, defaultOptions, options);
-    for (const [ext, compiler] of Object.entries(options.compilers)) {
-        options.compilers[ext] = Object.assign({}, compilers[ext] || {}, compiler);
-    }
-    options.compilers = Object.assign({}, compilers, options.compilers);
+module.exports.transpile = async function (altfile, options = {}) {
+    options = Object.assign({}, {
+        maps: "",        // "": same location, string: specify relative, true: data URI, false: no map file, object: see code
+        outfile: null,   // output filename (null: same direcotry)
+        minified: false, // true: minify, false: human readable, null: auto detect by outfile
+        nocache: false,  // true: nouse cache file
+        nowrite: false,  // true: nowriting file
+        logger: console, // logger instance
+    }, options);
 
     if (options.minified === null) {
         if (options.outfile) {
@@ -173,7 +199,7 @@ module.exports = async function (altfile, options = {}) {
         }
 
         const results = [];
-        const compiler = options.compilers[path.extname(result.filename)];
+        const compiler = compilers[path.extname(result.filename)];
         const writeFile = function (filename, content) {
             if (!options.nowrite) {
                 results.push(fs.promises.putFile(filename, content).then(function () {
