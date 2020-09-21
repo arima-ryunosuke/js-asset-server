@@ -5,16 +5,20 @@
   "author": "ryunosuke",
   "main": "index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arima-ryunosuke/js-asset-server"
+  },
   "dependencies": {
-    "@babel/core": "*",
-    "@babel/preset-env": "*",
-    "node-sass": "*",
-    "express": "*",
-    "multer": "*",
-    "chokidar": "*"
+    "@babel/core": "7.*",
+    "@babel/preset-env": "7.*",
+    "node-sass": "4.*",
+    "express": "4.*",
+    "multer": "1.*",
+    "chokidar": "3.*"
   },
   "devDependencies": {
-    "jest": "*"
+    "jest": "26.*"
   },
   "scripts": {
     "test": "jest"
