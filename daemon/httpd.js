@@ -59,10 +59,16 @@ module.exports = function (config) {
         router.get('/*', function (req, res, next) {
             return async function () {
                 const reqfile = path.join(rootdir, req.path);
-                const altfile = transpiler.getAltfile(reqfile);
-                if (altfile) {
-                    if (req.nocache || ((await fs.promises.mtime(reqfile)) < (await fs.promises.mtime(altfile)))) {
-                        await transpiler.transpile(altfile, Object.assign({}, options, {
+                const altfiles = [];
+                for (const file of path.separateName(',', reqfile)) {
+                    const altfile = transpiler.getAltfile(file, reqfile !== file);
+                    if (altfile) {
+                        altfiles.push(altfile);
+                    }
+                }
+                if (altfiles.length) {
+                    if (req.nocache || (await fs.promises.mtime(reqfile) < Math.max(...await Promise.all(altfiles.map(v => fs.promises.mtime(v)))))) {
+                        await transpiler.transpile(altfiles, Object.assign({}, options, {
                             rootdir: rootdir,
                             localdir: local,
                             outfile: reqfile,
