@@ -1,1 +1,4 @@
 /node_modules
+/example/map
+/example/**/*.js
+/example/**/*.css
