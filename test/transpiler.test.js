@@ -43,6 +43,21 @@ test('register', async () => {
     expect(result.mapping.sources).toEqual(['/.assetter-test/custom.txt']);
 });
 
+test('register string', async () => {
+    const input = workdir + '/custom2.hoge';
+    fs.writeFileSync(input, 'html{body{color:red}}');
+    transpiler.regsiter('.hoge', '.styl');
+    expect(transpiler.getAltfile(workdir + '/custom2.css')).toEqual(path.resolve(input));
+    const result = await transpile(input, Object.assign({}, options, {}));
+    expect(result.filename).toEqual(path.resolve(workdir + '/custom2.css'));
+    expect(result.content).toEqual(`html body {
+  color: #f00;
+}
+
+/*# sourceMappingURL=custom2.css.map */`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/custom2.css.map'));
+    expect(result.mapping.sources).toEqual(['/.assetter-test/custom2.hoge']);
+});
 
 test('compile scss', async () => {
     const input = workdir + '/test.scss';

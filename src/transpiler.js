@@ -67,6 +67,10 @@ const compilers = new function () {
 };
 
 module.exports.regsiter = function (altext, compiler, similar = null) {
+    if (typeof (compiler) === 'string') {
+        similar = compiler;
+        compiler = {};
+    }
     compilers[altext] = Object.assign({}, compilers[similar || altext] || {}, compiler);
 };
 
