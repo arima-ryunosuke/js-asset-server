@@ -4,7 +4,7 @@ const util = require('util');
 const compilers = new function () {
     this['.css'] = {
         ext: '.css',
-        mappingURL: url => `\n/*# sourceMappingURL=${url} */`.replace(/\\/g, '/'),
+        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         compile: async function (input, options) {
             // https://github.com/sass/node-sass
             const nodeSass = require('node-sass');
@@ -28,7 +28,7 @@ const compilers = new function () {
 
     this['.js'] = {
         ext: '.js',
-        mappingURL: url => `\n//# sourceMappingURL=${url}`.replace(/\\/g, '/'),
+        mappingURL: url => `\n//# sourceMappingURL=${url}`,
         compile: async function (input, options) {
             // https://babeljs.io/docs/en/options
             const babel = require('@babel/core');
@@ -226,7 +226,7 @@ module.exports.transpile = async function (altfile, options = {}) {
             const localname = `${path.basename(result.filename)}.map`;
             const url = path.join(options.maps, localname);
             result.mappath = path.join(path.dirname(result.filename), url);
-            writeFile(result.filename, result.content += compiler.mappingURL(url));
+            writeFile(result.filename, result.content += compiler.mappingURL(url.replace(/\\/g, '/')));
             writeFile(result.mappath, map);
         }
         else {
@@ -235,7 +235,7 @@ module.exports.transpile = async function (altfile, options = {}) {
                 const localname = path.join(options.localdir, path.relative(options.rootdir, result.filename));
                 const url = path.join(relative, `${localname}.map`);
                 result.mappath = path.join(absolute, `${localname}.map`);
-                writeFile(result.filename, result.content += compiler.mappingURL(url));
+                writeFile(result.filename, result.content += compiler.mappingURL(url.replace(/\\/g, '/')));
                 writeFile(result.mappath, map);
             }
         }
