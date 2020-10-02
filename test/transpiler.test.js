@@ -73,6 +73,20 @@ test('compile scss', async () => {
     expect(result.mapping.sources).toEqual(['/.assetter-test/test.scss']);
 });
 
+test('compile stylus', async () => {
+    const input = workdir + '/test.stylus';
+    fs.writeFileSync(input, 'html{body{color:red}}');
+    const result = await transpile(input, Object.assign({}, options, {}));
+    expect(result.filename).toEqual(path.resolve(workdir + '/test.css'));
+    expect(result.content).toEqual(`html body {
+  color: #f00;
+}
+
+/*# sourceMappingURL=test.css.map */`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/test.css.map'));
+    expect(result.mapping.sources).toEqual(['/.assetter-test/test.stylus']);
+});
+
 test('compile es', async () => {
     const input = workdir + '/test.es';
     fs.writeFileSync(input, '() => 123');

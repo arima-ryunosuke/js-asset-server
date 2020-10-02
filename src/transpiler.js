@@ -2,7 +2,7 @@ const {fs, path} = require('./util');
 const util = require('util');
 
 const compilers = new function () {
-    this['.css'] = {
+    this['.css'] = this['.sass'] = this['.scss'] = {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         compile: async function (input, options) {
@@ -24,9 +24,29 @@ const compilers = new function () {
         },
         callback: null,
     };
-    this['.sass'] = this['.scss'] = this['.css'];
 
-    this['.js'] = {
+    this['.styl'] = this['.stylus'] = {
+        ext: '.css',
+        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
+        compile: async function (input, options) {
+            // https://stylus-lang.com/docs/executable.html
+            const content = (await fs.promises.readFile(input)).toString();
+            const renderer = require('stylus')(content, {
+                filename: input,
+                compress: options.minified,
+                sourcemap: {comment: false},
+            });
+            return Promise.resolve({
+                content: renderer.render(),
+                mapping: Object.assign(renderer.sourcemap, {
+                    sourcesContent: [content],
+                }),
+            })
+        },
+        callback: null,
+    };
+
+    this['.js'] = this['.es'] = this['.es6'] = {
         ext: '.js',
         mappingURL: url => `\n//# sourceMappingURL=${url}`,
         compile: async function (input, options) {
@@ -63,7 +83,6 @@ const compilers = new function () {
         },
         callback: null,
     };
-    this['.es'] = this['.es6'] = this['.js'];
 };
 
 module.exports.regsiter = function (altext, compiler, similar = null) {
