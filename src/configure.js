@@ -3,10 +3,6 @@ const os = require('os');
 
 module.exports = function (config) {
     const results = Object.assign({
-        // bind address
-        host: '0.0.0.0',
-        // listen port
-        port: 8080,
         // temporary directory (upload file, cache file, or etc)
         tmpdir: os.tmpdir(),
         // mount route
@@ -17,6 +13,12 @@ module.exports = function (config) {
         maps: {
             "/path/to/relative": "fullpath",
         },
+        // bind address for httpd
+        host: '0.0.0.0',
+        // listen port for httpd
+        port: 8080,
+        // awaitWriteFinish for fsd
+        wait: true,
         // log level: ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR']
         loglevel: 'INFO',
     }, config);

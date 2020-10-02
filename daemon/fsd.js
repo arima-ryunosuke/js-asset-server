@@ -13,6 +13,7 @@ module.exports = function (config) {
             ignoreInitial: true,
             ignored: /(^|[\/\\])\../,
             persistent: true,
+            awaitWriteFinish: options.wait,
         }).on('all', (eventName, path) => {
             if (['add', 'change'].includes(eventName) && transpiler.canTranspile(path)) {
                 transpiler.transpile(path, Object.assign({}, options, {
