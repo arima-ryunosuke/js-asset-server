@@ -13,6 +13,8 @@ module.exports = function (config) {
         maps: {
             "/path/to/relative": "fullpath",
         },
+        // target browser
+        browserslist: [],
         // bind address for httpd
         host: '0.0.0.0',
         // listen port for httpd

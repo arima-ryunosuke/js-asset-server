@@ -13,6 +13,8 @@
     "@babel/core": "7.*",
     "@babel/preset-env": "7.*",
     "node-sass": "4.*",
+    "autoprefixer": "10.*",
+    "postcss": "8.*",
     "stylus": "0.54.*",
     "express": "4.*",
     "cors": "2.*",

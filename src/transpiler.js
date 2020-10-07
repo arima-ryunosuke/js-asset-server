@@ -6,6 +6,15 @@ const compilers = new function () {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         compile: async function (input, options) {
+            const postcss = function (css) {
+                const postcss = require('postcss');
+                const autoprefixer = require('autoprefixer');
+                const opt = {
+                    grid: "autoplace",
+                    overrideBrowserslist: options.browserslist,
+                };
+                return postcss([autoprefixer(opt)]).process(css, {}).css;
+            };
             // https://github.com/sass/node-sass
             const nodeSass = require('node-sass');
             this.promise = this.promise || util.promisify(nodeSass.render);
@@ -18,7 +27,7 @@ const compilers = new function () {
                 omitSourceMapUrl: true,
                 sourceMapContents: true,
             }).then(result => ({
-                content: result.css.toString(),
+                content: postcss(result.css.toString()),
                 mapping: JSON.parse(result.map.toString()),
             }));
         },
@@ -29,6 +38,15 @@ const compilers = new function () {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         compile: async function (input, options) {
+            const postcss = function (css) {
+                const postcss = require('postcss');
+                const autoprefixer = require('autoprefixer');
+                const opt = {
+                    grid: "autoplace",
+                    overrideBrowserslist: options.browserslist,
+                };
+                return postcss([autoprefixer(opt)]).process(css, {}).css;
+            };
             // https://stylus-lang.com/docs/executable.html
             const content = (await fs.promises.readFile(input)).toString();
             const renderer = require('stylus')(content, {
@@ -37,7 +55,7 @@ const compilers = new function () {
                 sourcemap: {comment: false},
             });
             return Promise.resolve({
-                content: renderer.render(),
+                content: postcss(renderer.render()),
                 mapping: Object.assign(renderer.sourcemap, {
                     sourcesContent: [content],
                 }),
@@ -57,6 +75,7 @@ const compilers = new function () {
                 babelrc: false,
                 presets: [["@babel/env", {
                     modules: false,
+                    targets: options.browserslist,
                 }]],
                 plugins: [
                     {
