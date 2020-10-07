@@ -1,5 +1,6 @@
 const {fs, path, logger} = require('../src/util');
 const express = require('express');
+const cors = require('cors');
 const multer = require('multer');
 const url = require('url');
 
@@ -10,6 +11,7 @@ module.exports = function (config) {
 
     const app = express();
 
+    app.use(cors());
     app.use(multer({storage: multer.memoryStorage()}).any());
 
     app.use(function (req, res, next) {
