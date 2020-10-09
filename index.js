@@ -1,5 +1,6 @@
 module.exports = {
     transpiler: require('./src/transpiler'),
-    httpd: require('./daemon/httpd'),
-    fsd: require('./daemon/fsd'),
+    run: require('./bin/run'),
+    httpd: require('./bin/httpd'),
+    fsd: require('./bin/fsd'),
 };
