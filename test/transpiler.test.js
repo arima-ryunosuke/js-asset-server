@@ -3,11 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const transpiler = require('../src/transpiler');
 const transpile = transpiler.transpile;
-const workdir = os.tmpdir() + '/.assetter-test';
+const workdir = os.tmpdir() + '/assetter-test';
 const options = {
     rootdir: workdir,
     localdir: '/.assetter-test',
     tmpdir: os.tmpdir(),
+    patterns: [],
     outfile: null,
     nocache: true,
     nowrite: true,
@@ -96,6 +97,18 @@ test('compile es', async () => {
 //# sourceMappingURL=test.js.map`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.js.map'));
     expect(result.mapping.sources).toEqual(['/.assetter-test/test.es']);
+});
+
+test('compile pattern', async () => {
+    const input_ = workdir + '/_test.es';
+    fs.writeFileSync(input_, '() => 123');
+    const result_ = await transpile(input_, Object.assign({}, options, {patterns: ['!**/_*.es']}));
+    expect(result_).toBeUndefined();
+
+    const input = workdir + '/test.es';
+    fs.writeFileSync(input, '() => 123');
+    const result = await transpile(input, Object.assign({}, options, {patterns: ['!**/_*.es']}));
+    expect(result).not.toBeUndefined();
 });
 
 test('compile multi', async () => {

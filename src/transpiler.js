@@ -1,5 +1,6 @@
 const {fs, path} = require('./util');
 const util = require('util');
+const minimatch = require('minimatch');
 
 const compilers = new function () {
     this['.css'] = this['.sass'] = this['.scss'] = {
@@ -140,6 +141,14 @@ module.exports.canTranspile = function (filename) {
 
 const transpile = async function (altfile, options) {
     altfile = path.resolve(altfile);
+
+    for (const pattern of options.patterns) {
+        if (!minimatch(altfile, pattern)) {
+            options.logger.info(`skip ${altfile} (no match)`);
+            return;
+        }
+    }
+
     const parts = path.parse(altfile);
     const compiler = compilers[parts.ext] || {};
     const outfile = path.resolve(options.outfile || path.changeExt(altfile, (options.minified ? '.min' : '') + compiler.ext));

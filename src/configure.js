@@ -13,6 +13,8 @@ module.exports = function (config) {
         maps: {
             "/path/to/relative": "fullpath",
         },
+        // match patterns
+        patterns: [],
         // target browser
         browserslist: [],
         // bind address for httpd
