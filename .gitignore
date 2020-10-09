@@ -1,4 +1,5 @@
 /.idea/
+/snippet.js
 /node_modules
 /example/map
 /example/**/*.js
