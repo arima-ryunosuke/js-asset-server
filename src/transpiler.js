@@ -115,7 +115,7 @@ const compilers = new function () {
         compile: async function (input, options) {
             // https://babeljs.io/docs/en/options
             const babel = require('@babel/core');
-            return babel.transformAsync((await fs.promises.readFile(input)).toString(), {
+            return babel.transformFileAsync(input, {
                 ast: false,
                 babelrc: false,
                 presets: [["@babel/env", {
@@ -240,9 +240,6 @@ const transpile = async function (altfile, options) {
         const relative = path.relative(options.rootdir, altfile);
         if (relative.startsWith('..')) {
             value.mapping.sources = [path.basename(altfile)];
-        }
-        else {
-            value.mapping.sources = [path.join(options.localdir, relative).replace(/\\/g, '/')];
         }
 
         if (compiler.callback) {
