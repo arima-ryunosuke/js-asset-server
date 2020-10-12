@@ -69,14 +69,12 @@ module.exports = function (config) {
                     }
                 }
                 if (altfiles.length) {
-                    if (req.nocache || (await fs.promises.mtime(reqfile) < Math.max(...await Promise.all(altfiles.map(v => fs.promises.mtime(v)))))) {
-                        await transpiler.transpile(altfiles, Object.assign({}, options, {
-                            rootdir: rootdir,
-                            localdir: local,
-                            outfile: reqfile,
-                            nocache: req.nocache,
-                        }));
-                    }
+                    await transpiler.transpile(altfiles, Object.assign({}, options, {
+                        rootdir: rootdir,
+                        localdir: local,
+                        outfile: reqfile,
+                        nocache: req.nocache,
+                    }));
                 }
 
                 // fall through static middleware

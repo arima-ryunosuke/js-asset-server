@@ -6,6 +6,40 @@ const compilers = new function () {
     this['.css'] = this['.sass'] = this['.scss'] = {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
+        precompile: async function (input) {
+            const depends = [input];
+            const nodeSass = require('node-sass');
+            this.promise = this.promise || util.promisify(nodeSass.render);
+            return this.promise({
+                file: input,
+                // https://qiita.com/http_kato83/items/c62ee3d255f45fc30c3b
+                data: (await fs.promises.readFile(input)).toString(),
+                sourceMap: 'dummy',
+                omitSourceMapUrl: true,
+                importer: function (url, prev, done) {
+                    if (!require('url').parse(url).protocol) {
+                        if (!path.isAbsolute(url)) {
+                            url = path.join(path.dirname(prev), url);
+                        }
+                        const parts = path.parse(url);
+                        const files = [
+                            `_${parts.name}.${parts.ext}`,
+                            `_${parts.name}.scss`, `_${parts.name}.sass`,
+                            `${parts.name}.scss`, `${parts.name}.sass`,
+                        ];
+                        const basename = files.find(e => fs.existsSync(path.join(parts.dir, e)));
+                        if (basename) {
+                            url = path.join(parts.dir, basename);
+                        }
+                    }
+
+                    depends.push(url);
+                    return done();
+                },
+            }).then(result => ({
+                depends: depends,
+            }));
+        },
         compile: async function (input, options) {
             const postcss = function (css) {
                 const postcss = require('postcss');
@@ -38,6 +72,11 @@ const compilers = new function () {
     this['.styl'] = this['.stylus'] = {
         ext: '.css',
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
+        precompile: async function (input) {
+            return Promise.resolve({
+                depends: [input],
+            });
+        },
         compile: async function (input, options) {
             const postcss = function (css) {
                 const postcss = require('postcss');
@@ -68,6 +107,11 @@ const compilers = new function () {
     this['.js'] = this['.es'] = this['.es6'] = {
         ext: '.js',
         mappingURL: url => `\n//# sourceMappingURL=${url}`,
+        precompile: async function (input) {
+            return Promise.resolve({
+                depends: [input],
+            });
+        },
         compile: async function (input, options) {
             // https://babeljs.io/docs/en/options
             const babel = require('@babel/core');
@@ -139,6 +183,7 @@ module.exports.canTranspile = function (filename) {
     return alts.includes(parts.ext);
 };
 
+const metadata = {};
 const transpile = async function (altfile, options) {
     altfile = path.resolve(altfile);
 
@@ -168,10 +213,21 @@ const transpile = async function (altfile, options) {
         return;
     }
 
+    if (options.nocache) {
+        delete metadata[altfile];
+    }
+    metadata[altfile] = metadata[altfile] || await compiler.precompile(altfile);
+    const altmtime = Math.max(...await Promise.all(metadata[altfile].depends.map(v => fs.promises.mtime(v))));
+
+    if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
+        options.logger.info(`skip ${altfile} (not modified)`);
+        return;
+    }
+
     const starttime = Date.now();
 
     // for cache
-    if (!options.nocache && await fs.promises.mtime(cachefile) > await fs.promises.mtime(altfile)) {
+    if (!options.nocache && await fs.promises.mtime(cachefile) > altmtime) {
         const value = JSON.parse((await fs.promises.readFile(cachefile)).toString());
         options.logger.info(`cache ${altfile} (${Date.now() - starttime}ms)`);
         return value;
