@@ -41,7 +41,6 @@ test('register', async () => {
 
 /*# sourceMappingURL=custom.css.map */`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/custom.css.map'));
-    expect(result.mapping.sources).toEqual(['/.assetter-test/custom.txt']);
 });
 
 test('register string', async () => {
@@ -57,7 +56,6 @@ test('register string', async () => {
 
 /*# sourceMappingURL=custom2.css.map */`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/custom2.css.map'));
-    expect(result.mapping.sources).toEqual(['/.assetter-test/custom2.hoge']);
 });
 
 test('compile scss', async () => {
@@ -71,7 +69,27 @@ test('compile scss', async () => {
 
 /*# sourceMappingURL=test.css.map */`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.css.map'));
-    expect(result.mapping.sources).toEqual(['/.assetter-test/test.scss']);
+});
+
+test('compile scss import', async () => {
+    const workdir = os.tmpdir() + '/assetter-test2';
+    const input = workdir + '/test.scss';
+    fs.mkdirSync(workdir, {recursive: true});
+    fs.writeFileSync(input, '@import "child";\nhtml{body{color:$color}}');
+    fs.writeFileSync(workdir + '/_child.scss', '$color: #123456;');
+    let result = await transpile(input, Object.assign({}, options, {nowrite: false}));
+    expect(result.filename).toEqual(path.resolve(workdir + '/test.css'));
+    expect(result.content).toContain(`#123456`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/test.css.map'));
+    expect(result.mapping.sources).toEqual(["test.scss"]);
+
+    result = await transpile(input, Object.assign({}, options, {nocache: false}));
+    expect(result).toBeUndefined();
+
+    fs.writeFileSync(workdir + '/_child.scss', '$color: #654321;');
+    result = await transpile(input, Object.assign({}, options, {nocache: false}));
+    expect(result).not.toBeUndefined();
+    expect(result.content).toContain(`#654321`);
 });
 
 test('compile stylus', async () => {
@@ -85,7 +103,6 @@ test('compile stylus', async () => {
 
 /*# sourceMappingURL=test.css.map */`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.css.map'));
-    expect(result.mapping.sources).toEqual(['/.assetter-test/test.stylus']);
 });
 
 test('compile es', async () => {
@@ -96,7 +113,6 @@ test('compile es', async () => {
     expect(result.content).toEqual(`"use transpile";(function () {return 123;});
 //# sourceMappingURL=test.js.map`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.js.map'));
-    expect(result.mapping.sources).toEqual(['/.assetter-test/test.es']);
 });
 
 test('compile pattern', async () => {
@@ -123,16 +139,14 @@ test('compile multi', async () => {
     expect(result.mappath).toEqual(path.resolve(workdir + '/test1,test2.js.map'));
     expect(result.mapping.sections).toHaveLength(2);
     expect(result.mapping.sections[0].offset).toEqual({line: 0, column: 0});
-    expect(result.mapping.sections[0].map.sources).toEqual(['/.assetter-test/test1.es']);
     expect(result.mapping.sections[1].offset).toEqual({line: 1, column: 0});
-    expect(result.mapping.sections[1].map.sources).toEqual(['/.assetter-test/test2.es']);
 });
 
 test('map: true', async () => {
     const input = workdir + '/test.es';
     fs.writeFileSync(input, '() => 123');
     const result = await transpile(input, Object.assign({}, options, {maps: true}));
-    expect(result.mappath).toEqual(`data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi8uYXNzZXR0ZXItdGVzdC90ZXN0LmVzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJnQkFBQSxxQkFBTSxHQUFOIiwic291cmNlc0NvbnRlbnQiOlsiKCkgPT4gMTIzIl0sImZpbGUiOiIvLmFzc2V0dGVyLXRlc3QvdGVzdC5qcyJ9`);
+    expect(result.mappath).toEqual(`data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInRlc3QuZXMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6ImdCQUFBLHFCQUFNLEdBQU4iLCJzb3VyY2VzQ29udGVudCI6WyIoKSA9PiAxMjMiXSwiZmlsZSI6Ii8uYXNzZXR0ZXItdGVzdC90ZXN0LmpzIn0=`);
 });
 
 test('map: false', async () => {
