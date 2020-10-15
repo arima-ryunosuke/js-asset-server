@@ -1,11 +1,11 @@
 const {fs, path} = require('./util');
 const util = require('util');
+const url = require('url');
 const minimatch = require('minimatch');
 
 const compilers = new function () {
-    this['.css'] = this['.sass'] = this['.scss'] = {
+    this['.sass'] = this['.scss'] = {
         ext: '.css',
-        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         precompile: async function (input) {
             const depends = [input];
             const nodeSass = require('node-sass');
@@ -41,15 +41,6 @@ const compilers = new function () {
             }));
         },
         compile: async function (input, options) {
-            const postcss = function (css) {
-                const postcss = require('postcss');
-                const autoprefixer = require('autoprefixer');
-                const opt = {
-                    grid: "autoplace",
-                    overrideBrowserslist: options.browserslist,
-                };
-                return postcss([autoprefixer(opt)]).process(css, {}).css;
-            };
             // https://github.com/sass/node-sass
             const nodeSass = require('node-sass');
             this.promise = this.promise || util.promisify(nodeSass.render);
@@ -62,31 +53,23 @@ const compilers = new function () {
                 omitSourceMapUrl: true,
                 sourceMapContents: true,
             }).then(result => ({
-                content: postcss(result.css.toString()),
+                content: result.css.toString(),
                 mapping: JSON.parse(result.map.toString()),
             }));
         },
-        callback: null,
+        postcompile: async function (output, options) {
+            return output;
+        },
     };
 
     this['.styl'] = this['.stylus'] = {
         ext: '.css',
-        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         precompile: async function (input) {
             return Promise.resolve({
                 depends: [input],
             });
         },
         compile: async function (input, options) {
-            const postcss = function (css) {
-                const postcss = require('postcss');
-                const autoprefixer = require('autoprefixer');
-                const opt = {
-                    grid: "autoplace",
-                    overrideBrowserslist: options.browserslist,
-                };
-                return postcss([autoprefixer(opt)]).process(css, {}).css;
-            };
             // https://stylus-lang.com/docs/executable.html
             const content = (await fs.promises.readFile(input)).toString();
             const renderer = require('stylus')(content, {
@@ -95,18 +78,19 @@ const compilers = new function () {
                 sourcemap: {comment: false},
             });
             return Promise.resolve({
-                content: postcss(renderer.render()),
+                content: renderer.render(),
                 mapping: Object.assign(renderer.sourcemap, {
                     sourcesContent: [content],
                 }),
             })
         },
-        callback: null,
+        postcompile: async function (output, options) {
+            return output;
+        },
     };
 
-    this['.js'] = this['.es'] = this['.es6'] = {
+    this['.es'] = this['.es6'] = {
         ext: '.js',
-        mappingURL: url => `\n//# sourceMappingURL=${url}`,
         precompile: async function (input) {
             return Promise.resolve({
                 depends: [input],
@@ -145,8 +129,56 @@ const compilers = new function () {
                 mapping: result.map,
             }));
         },
-        callback: null,
+        postcompile: async function (output, options) {
+            return output;
+        },
     };
+
+    this['.css'] = Object.assign({
+        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
+        complete: async function (value, options) {
+            value.content = require('postcss')([
+                function (css) {
+                    const supportedProps = [
+                        'background',
+                        'background-image',
+                        'border-image',
+                        'behavior',
+                        'list-style',
+                        'src',
+                        'cursor',
+                    ];
+                    css.walkDecls(function (decl) {
+                        if (supportedProps.includes(decl.prop)) {
+                            decl.value = decl.value.replace(/url\s*\(\s*(['"])?([^'")]+)(['"])?\s*\)/gi, function (match, s, uri, e) {
+                                const parts = url.parse(uri);
+                                const fullpath = path.isAbsolute(parts.pathname)
+                                    ? path.join(options.rootdir, parts.pathname.substring(options.localdir.length))
+                                    : path.join(path.dirname(value.filename), parts.pathname)
+                                ;
+                                if (fs.existsSync(fullpath)) {
+                                    const time = fs.statSync(fullpath).mtime.getTime();
+                                    const query = parts.query ? '&' + parts.query : '';
+                                    const hash = parts.hash ? parts.hash : '';
+                                    return `url(${s || ''}${parts.pathname}?${time}${query}${hash}${e || ''})`;
+                                }
+                                return match;
+                            });
+                        }
+                    });
+                },
+                require('autoprefixer')({
+                    grid: "autoplace",
+                    overrideBrowserslist: options.browserslist,
+                }),
+            ]).process(value.content, {}).css;
+        },
+    }, this['.sass']);
+
+    this['.js'] = Object.assign({
+        mappingURL: url => `\n//# sourceMappingURL=${url}`,
+        complete: async function (value, options) {},
+    }, this['.es']);
 };
 
 module.exports.regsiter = function (altext, compiler, similar = null) {
@@ -242,9 +274,7 @@ const transpile = async function (altfile, options) {
             value.mapping.sources = [path.basename(altfile)];
         }
 
-        if (compiler.callback) {
-            compiler.callback(value);
-        }
+        await compiler.postcompile(value, options);
         await fs.promises.putFile(cachefile, JSON.stringify(value));
         options.logger.info(`done ${altfile} (${Date.now() - starttime}ms)`);
         return value;
@@ -297,7 +327,7 @@ module.exports.transpile = async function (altfile, options = {}) {
         }
     });
 
-    return result.then(result => {
+    return result.then(async result => {
         if (!result) {
             return;
         }
@@ -311,6 +341,8 @@ module.exports.transpile = async function (altfile, options = {}) {
                 }));
             }
         };
+
+        await compiler.complete(result, options);
 
         if (options.maps === true) {
             const map = Buffer.from(JSON.stringify(result.mapping)).toString('base64');

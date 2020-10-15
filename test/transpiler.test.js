@@ -28,7 +28,7 @@ test('register', async () => {
     const input = workdir + '/custom.txt';
     fs.writeFileSync(input, 'html{body{color:red}}');
     transpiler.regsiter('.txt', {
-        callback: function (value) {
+        postcompile: function (value) {
             value.content = value.content.replace('body', 'BODY');
         },
     }, '.scss');
@@ -90,6 +90,17 @@ test('compile scss import', async () => {
     result = await transpile(input, Object.assign({}, options, {nocache: false}));
     expect(result).not.toBeUndefined();
     expect(result.content).toContain(`#654321`);
+});
+
+test('compile scss url', async () => {
+    const input = workdir + '/test.scss';
+    const image = workdir + '/hoge.png';
+    fs.writeFileSync(input, 'a{background:url(hoge.png)}b{background:url("/hoge.png")}c{background:url("/hoge.png?a=z#iefix")}');
+    fs.writeFileSync(image, '');
+    let result = await transpile(input, Object.assign({}, options));
+    expect(result.content).toContain(`hoge.png?`);
+    expect(result.content).toContain(`"/hoge.png?`);
+    expect(result.content).toContain(`&a=z#iefix`);
 });
 
 test('compile stylus', async () => {
