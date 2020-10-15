@@ -27,6 +27,15 @@ module.exports = function (config) {
         loglevel: 'INFO',
     }, config);
 
+    for (const [local, root] of Object.entries(results.routes)) {
+        delete results.routes[local];
+        results.routes['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
+    }
+    for (const [local, root] of Object.entries(results.maps)) {
+        delete results.maps[local];
+        results.maps['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
+    }
+
     results.tmpdir = path.resolve(results.tmpdir);
 
     logger.debug(results);
