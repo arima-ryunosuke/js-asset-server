@@ -1,4 +1,4 @@
-# assertter (asset web server)
+# assetter (asset web server)
 
 ## Description
 
@@ -26,7 +26,13 @@ node example/index.js
 
 ## Usage
 
-### GET
+### run
+
+convert all founded file.
+
+### http
+
+#### GET
 
 convert `.js` `.css` based on request path and http cache mechanism.
 
@@ -36,7 +42,7 @@ e.g.
 - GET /hoge.css -> transpile via hoge.scss
 - GET /hoge.min.css -> minify via hoge.scss|css
 
-### POST
+#### POST
 
 converts `.js` `.css` based on request file and put file.
 
