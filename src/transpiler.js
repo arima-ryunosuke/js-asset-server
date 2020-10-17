@@ -2,6 +2,7 @@ const {fs, path} = require('./util');
 const util = require('util');
 const url = require('url');
 const minimatch = require('minimatch');
+const sourcemapmerge = require('merge-source-map');
 
 const compilers = new function () {
     this['.sass'] = this['.scss'] = {
@@ -137,7 +138,7 @@ const compilers = new function () {
     this['.css'] = Object.assign({
         mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
         complete: async function (value, options) {
-            value.content = require('postcss')([
+            const posted = await require('postcss')([
                 function (css) {
                     const supportedProps = [
                         'background',
@@ -171,7 +172,16 @@ const compilers = new function () {
                     grid: "autoplace",
                     overrideBrowserslist: options.browserslist,
                 }),
-            ]).process(value.content, {}).css;
+            ]).process(value.content, {
+                from: value.filename,
+                map: {
+                    inline: false,
+                    sourcesContent: true,
+                    annotation: false,
+                },
+            });
+            value.content = posted.css;
+            value.mapping = sourcemapmerge(value.mapping, posted.map.toString());
         },
     }, this['.sass']);
 
