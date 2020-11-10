@@ -42,7 +42,7 @@ exports.path = (function () {
 
     path.separateName = function (glue, filename) {
         const parts = path.parse(filename);
-        return parts.name.split(glue).map(function (v) {
+        return parts.base.split(glue).map(function (v) {
             const nv = path.parse(v);
             return path.join(parts.dir, nv.name + (nv.ext || parts.ext));
         });

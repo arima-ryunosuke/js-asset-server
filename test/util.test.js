@@ -29,4 +29,5 @@ test('path.separateName', async () => {
     expect(path.separateName(',', 'a/b/c/x,y,z.txt')).toEqual(['a/b/c/x.txt', 'a/b/c/y.txt', 'a/b/c/z.txt'].map(path.normalize));
     expect(path.separateName(',', 'a/b/c/x.txt')).toEqual(['a/b/c/x.txt'].map(path.normalize));
     expect(path.separateName(',', 'a/b/c/x.min.txt,y.csv')).toEqual(['a/b/c/x.min.txt', 'a/b/c/y.csv'].map(path.normalize));
+    expect(path.separateName(',', 'a/b/c/x.min.txt')).toEqual(['a/b/c/x.min.txt'].map(path.normalize));
 });
