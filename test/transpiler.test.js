@@ -126,6 +126,16 @@ test('compile es', async () => {
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.js.map'));
 });
 
+test('compile ts', async () => {
+    const input = workdir + '/test.ts';
+    fs.writeFileSync(input, '(n: number): number => n * 123');
+    const result = await transpile(input, Object.assign({}, options, {}));
+    expect(result.filename).toEqual(path.resolve(workdir + '/test.js'));
+    expect(result.content).toEqual(`"use transpile";(function (n) {return n * 123;});
+//# sourceMappingURL=test.js.map`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/test.js.map'));
+});
+
 test('compile pattern', async () => {
     const input_ = workdir + '/_test.es';
     fs.writeFileSync(input_, '() => 123');

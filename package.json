@@ -12,6 +12,7 @@
   "dependencies": {
     "@babel/core": "7.*",
     "@babel/preset-env": "7.*",
+    "@babel/preset-typescript": "7.*",
     "node-sass": "4.*",
     "autoprefixer": "10.*",
     "postcss": "8.*",
