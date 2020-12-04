@@ -6,7 +6,7 @@ const transpile = transpiler.transpile;
 const workdir = os.tmpdir() + '/assetter-test';
 const options = {
     rootdir: workdir,
-    localdir: '/.assetter-test',
+    localdir: '/routename',
     tmpdir: os.tmpdir(),
     patterns: [],
     outfile: null,
@@ -94,13 +94,14 @@ test('compile scss import', async () => {
 
 test('compile scss url', async () => {
     const input = workdir + '/test.scss';
-    const image = workdir + '/hoge.png';
-    fs.writeFileSync(input, 'a{background:url(hoge.png)}b{background:url("/hoge.png")}c{background:url("/hoge.png?a=z#iefix")}');
-    fs.writeFileSync(image, '');
+    fs.writeFileSync(input, 'a{background:url(hoge.png)}b{background:url("/routename/fuga.png")}c{background:url("/routename/piyo.png?a=z#iefix")}');
+    fs.writeFileSync(workdir + '/hoge.png', 'hoge');
+    fs.writeFileSync(workdir + '/fuga.png', 'fuga');
+    fs.writeFileSync(workdir + '/piyo.png', 'piyo');
     let result = await transpile(input, Object.assign({}, options));
-    expect(result.content).toContain(`hoge.png?`);
-    expect(result.content).toContain(`"/hoge.png?`);
-    expect(result.content).toContain(`&a=z#iefix`);
+    expect(result.content).toContain(`url(hoge.png?31f30ddbcb1bf8446576f0e64aa4c88a9f055e3c)`);
+    expect(result.content).toContain(`url("/routename/fuga.png?e86797b125848e625d70987c20e4127bbb3db51a"`);
+    expect(result.content).toContain(`url("/routename/piyo.png?d44054a3e28a00addf25d0fe5cd7163307fe52ea&a=z#iefix"`);
 });
 
 test('compile stylus', async () => {
@@ -167,7 +168,7 @@ test('map: true', async () => {
     const input = workdir + '/test.es';
     fs.writeFileSync(input, '() => 123');
     const result = await transpile(input, Object.assign({}, options, {maps: true}));
-    expect(result.mappath).toEqual(`data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInRlc3QuZXMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6ImdCQUFBLHFCQUFNLEdBQU4iLCJzb3VyY2VzQ29udGVudCI6WyIoKSA9PiAxMjMiXSwiZmlsZSI6Ii8uYXNzZXR0ZXItdGVzdC90ZXN0LmpzIn0=`);
+    expect(result.mappath).toEqual(`data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInRlc3QuZXMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6ImdCQUFBLHFCQUFNLEdBQU4iLCJzb3VyY2VzQ29udGVudCI6WyIoKSA9PiAxMjMiXSwiZmlsZSI6Ii9yb3V0ZW5hbWUvdGVzdC5qcyJ9`);
 });
 
 test('map: false', async () => {
@@ -191,6 +192,6 @@ test('map: {alias: fullpath}', async () => {
     fs.writeFileSync(input, '() => 123');
     const result = await transpile(input, Object.assign({}, options, {maps: {"/map": workdir + '/map'}}));
     expect(result.content).toEqual(`"use transpile";(function () {return 123;});
-//# sourceMappingURL=/map/.assetter-test/test.js.map`);
-    expect(result.mappath).toEqual(path.resolve(workdir + '/map/.assetter-test/test.js.map'));
+//# sourceMappingURL=/map/routename/test.js.map`);
+    expect(result.mappath).toEqual(path.resolve(workdir + '/map/routename/test.js.map'));
 });

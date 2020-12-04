@@ -3,6 +3,7 @@ const util = require('util');
 const url = require('url');
 const minimatch = require('minimatch');
 const sourcemapmerge = require('merge-source-map');
+const crypto = require('crypto');
 
 const compilers = new function () {
     this['.sass'] = this['.scss'] = {
@@ -161,10 +162,12 @@ const compilers = new function () {
                                     : path.join(path.dirname(value.filename), parts.pathname)
                                 ;
                                 if (fs.existsSync(fullpath)) {
-                                    const time = fs.statSync(fullpath).mtime.getTime();
+                                    const sha1 = crypto.createHash('sha1');
+                                    sha1.update(fs.readFileSync(fullpath));
+                                    const id = sha1.digest('hex');
                                     const query = parts.query ? '&' + parts.query : '';
                                     const hash = parts.hash ? parts.hash : '';
-                                    return `url(${s || ''}${parts.pathname}?${time}${query}${hash}${e || ''})`;
+                                    return `url(${s || ''}${parts.pathname}?${id}${query}${hash}${e || ''})`;
                                 }
                                 return match;
                             });
