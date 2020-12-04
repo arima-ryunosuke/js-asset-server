@@ -90,7 +90,7 @@ const compilers = new function () {
         },
     };
 
-    this['.es'] = this['.es6'] = {
+    this['.es'] = this['.es6'] = this['.ts'] = {
         ext: '.js',
         precompile: async function (input) {
             return Promise.resolve({
@@ -103,10 +103,13 @@ const compilers = new function () {
             return babel.transformFileAsync(input, {
                 ast: false,
                 babelrc: false,
-                presets: [["@babel/env", {
+                presets: [
+                  ["@babel/env", {
                     modules: false,
                     targets: options.browserslist,
-                }]],
+                  }], 
+                  "@babel/preset-typescript"
+                ],
                 plugins: [
                     {
                         name: 'babel-prefix-plugin',
