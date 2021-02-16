@@ -1,5 +1,6 @@
 const {fs, path, logger} = require('../src/util');
 const express = require('express');
+const serveIndex = require('serve-index');
 const cors = require('cors');
 const multer = require('multer');
 const url = require('url');
@@ -111,7 +112,10 @@ module.exports = function (config) {
             }().catch(next);
         });
 
-        router.use(express.static(rootdir));
+        router.use(express.static(rootdir), serveIndex(rootdir, {
+            view: "details",
+            icons: true,
+        }));
 
         app.use(local, router);
     }
