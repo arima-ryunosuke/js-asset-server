@@ -54,6 +54,13 @@ if multiple file requested, combine all request files.
 
 ## Release
 
+### future task
+
+- Refactor (division of responsibilities)
+- Function reduction (no use function)
+- Detail README.md
+- Release 1.0.0
+
 ### 0.0.1
 
 - release developing version
