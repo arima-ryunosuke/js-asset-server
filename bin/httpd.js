@@ -62,12 +62,16 @@ module.exports = function (config) {
         router.get('/*', function (req, res, next) {
             return async function () {
                 const reqfile = path.join(rootdir, req.path);
+                const localfile = transpiler.normalizePath(path.join(local, req.path));
                 const altfiles = [];
-                for (const file of path.separateName(',', reqfile)) {
-                    const altfile = transpiler.getAltfile(file, reqfile !== file);
-                    if (altfile) {
-                        altfiles.push(altfile);
-                    }
+                if (options.aliases[localfile]) {
+                    altfiles.push(...options.aliases[localfile]);
+                }
+                else {
+                    altfiles.push(...path.separateName(',', reqfile)
+                        .map(file => transpiler.getAltfile(file, reqfile !== file))
+                        .filter(altfile => altfile)
+                    );
                 }
                 if (altfiles.length) {
                     await transpiler.transpile(altfiles, Object.assign({}, options, {

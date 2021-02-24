@@ -211,6 +211,11 @@ module.exports.regsiter = function (altext, compiler, similar = null) {
     compilers[altext] = Object.assign({}, compilers[similar || altext] || {}, compiler);
 };
 
+module.exports.normalizePath = function (filename) {
+    const parts = path.parse(filename);
+    return path.join(parts.dir, path.basename(parts.name, '.min') + parts.ext).replace(/\\/g, '/');
+};
+
 module.exports.getAltfile = function (filename, forced = false) {
     const parts = path.parse(filename);
     const basename = path.join(parts.dir, path.basename(parts.name, '.min'));

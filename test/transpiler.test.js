@@ -58,6 +58,10 @@ test('register string', async () => {
     expect(result.mappath).toEqual(path.resolve(workdir + '/custom2.css.map'));
 });
 
+test('normalize path', async () => {
+    expect(transpiler.normalizePath('a\\b\\c.min.js')).toEqual('a/b/c.js');
+});
+
 test('compile scss', async () => {
     const input = workdir + '/test.scss';
     fs.writeFileSync(input, 'html{body{color:red}}');

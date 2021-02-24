@@ -8,7 +8,9 @@ module.exports = function (config) {
         // mount route
         routes: {
             "/path/to/directory": "fullpath",
+            "/path/to/filename.js": ["fullpath1.js", "fullpath2.es"],
         },
+        aliases: {},
         // map directory
         maps: {
             "/path/to/relative": "fullpath",
@@ -27,14 +29,23 @@ module.exports = function (config) {
         loglevel: 'INFO',
     }, config);
 
+    const routes = {};
+    const aliases = {};
     for (const [local, root] of Object.entries(results.routes)) {
-        delete results.routes[local];
-        results.routes['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
+        if (root instanceof Array) {
+            aliases['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = root.map(v => path.resolve(v));
+        }
+        else {
+            routes['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
+        }
     }
+    const maps = {};
     for (const [local, root] of Object.entries(results.maps)) {
-        delete results.maps[local];
-        results.maps['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
+        maps['/' + local.replace(/\\/g, '/').replace(/^\/|\/$/, '')] = path.resolve(root);
     }
+    results.routes = routes;
+    results.aliases = aliases;
+    results.maps = maps;
 
     results.tmpdir = path.resolve(results.tmpdir);
 
