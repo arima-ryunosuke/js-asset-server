@@ -271,7 +271,7 @@ const transpile = async function (altfile, options) {
         delete metadata[altfile];
     }
     metadata[altfile] = metadata[altfile] || await compiler.precompile(altfile);
-    const altmtime = Math.max(...await Promise.all(metadata[altfile].depends.map(v => fs.promises.mtime(v))));
+    const altmtime = Math.max(options.altmtime, ...await Promise.all(metadata[altfile].depends.map(v => fs.promises.mtime(v))));
 
     if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
         options.logger.info(`skip ${altfile} (not modified)`);
@@ -328,6 +328,7 @@ module.exports.transpile = async function (altfile, options = {}) {
     if (!(altfile instanceof Array)) {
         altfile = [altfile];
     }
+    options.altmtime = Math.max(...await Promise.all(altfile.map(v => fs.promises.mtime(v))));
     const result = Promise.all(altfile.map(file => transpile(file, options))).then(function (values) {
         values = values.filter(v => v);
         if (values.length) {
