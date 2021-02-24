@@ -99,30 +99,36 @@ const compilers = new function () {
             });
         },
         compile: async function (input, options) {
+            // fix later (normally should implement compile for each extension)
+            const presets = [];
+            const plugins = [];
+            const inputExt = path.extname(input).toLowerCase();
+            if (inputExt !== '.js') {
+                presets.push([
+                    "@babel/env", {
+                        modules: false,
+                        targets: options.browserslist,
+                    }
+                ]);
+                presets.push("@babel/preset-typescript");
+                plugins.push({
+                    name: 'babel-prefix-plugin',
+                    visitor: {
+                        Program: {
+                            enter: function (path, file) {
+                                path.unshiftContainer('body', babel.template(' "use transpile";')());
+                            }
+                        }
+                    }
+                });
+            }
             // https://babeljs.io/docs/en/options
             const babel = require('@babel/core');
             return babel.transformFileAsync(input, {
                 ast: false,
                 babelrc: false,
-                presets: [
-                  ["@babel/env", {
-                    modules: false,
-                    targets: options.browserslist,
-                  }], 
-                  "@babel/preset-typescript"
-                ],
-                plugins: [
-                    {
-                        name: 'babel-prefix-plugin',
-                        visitor: {
-                            Program: {
-                                enter: function (path, file) {
-                                    path.unshiftContainer('body', babel.template(' "use transpile";')());
-                                }
-                            }
-                        }
-                    }
-                ],
+                presets: presets,
+                plugins: plugins,
                 inputSourceMap: false,
                 sourceMaps: true,
                 comments: false,
