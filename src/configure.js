@@ -52,6 +52,14 @@ module.exports = function (config) {
         return path.join(parts.dir, path.basename(parts.name, '.min') + parts.ext).replace(/\\/g, '/');
     };
 
+    results.resolvePath = function (filepath) {
+        for (const [local, root] of Object.entries(results.routes)) {
+            if (filepath.indexOf(local) === 0) {
+                return path.join(root, filepath.substring(local.length));
+            }
+        }
+    };
+
     results.tmpdir = path.resolve(results.tmpdir);
 
     results.logger = logger.setLevel(results.loglevel);

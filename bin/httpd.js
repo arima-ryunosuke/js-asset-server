@@ -4,6 +4,7 @@ const serveIndex = require('serve-index');
 const cors = require('cors');
 const multer = require('multer');
 const url = require('url');
+const querystring = require('querystring');
 
 const transpiler = require('../src/transpiler');
 
@@ -63,7 +64,7 @@ module.exports = function (config) {
             return async function () {
                 const reqfile = path.join(rootdir, req.path);
                 const localfile = options.normalizePath(path.join(local, req.path));
-                const altfiles = [];
+                const altfiles = (querystring.parse(req.rawquery).srcset || '').split('+').filter(v => v).map(options.resolvePath);
                 if (options.aliases[localfile]) {
                     altfiles.push(...options.aliases[localfile]);
                 }
