@@ -62,7 +62,7 @@ module.exports = function (config) {
         router.get('/*', function (req, res, next) {
             return async function () {
                 const reqfile = path.join(rootdir, req.path);
-                const localfile = transpiler.normalizePath(path.join(local, req.path));
+                const localfile = options.normalizePath(path.join(local, req.path));
                 const altfiles = [];
                 if (options.aliases[localfile]) {
                     altfiles.push(...options.aliases[localfile]);

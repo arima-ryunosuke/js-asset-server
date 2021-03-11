@@ -47,11 +47,16 @@ module.exports = function (config) {
     results.aliases = aliases;
     results.maps = maps;
 
+    results.normalizePath = function (filename) {
+        const parts = path.parse(filename);
+        return path.join(parts.dir, path.basename(parts.name, '.min') + parts.ext).replace(/\\/g, '/');
+    };
+
     results.tmpdir = path.resolve(results.tmpdir);
 
-    logger.debug(results);
-
     results.logger = logger.setLevel(results.loglevel);
+
+    results.logger.debug(results);
 
     return results;
 };
