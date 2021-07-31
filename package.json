@@ -13,7 +13,7 @@
     "@babel/core": "7.*",
     "@babel/preset-env": "7.*",
     "@babel/preset-typescript": "7.*",
-    "node-sass": "4.*",
+    "sass": "1.*",
     "autoprefixer": "10.*",
     "postcss": "8.*",
     "stylus": "0.54.*",
@@ -26,7 +26,7 @@
     "chokidar": "3.*"
   },
   "devDependencies": {
-    "jest": "26.*"
+    "jest": "27.*"
   },
   "scripts": {
     "test": "jest"

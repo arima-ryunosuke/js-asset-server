@@ -1,5 +1,4 @@
 const {fs, path} = require('./util');
-const util = require('util');
 const url = require('url');
 const minimatch = require('minimatch');
 const sourcemapmerge = require('merge-source-map');
@@ -9,55 +8,25 @@ const compilers = new function () {
     this['.sass'] = this['.scss'] = {
         ext: '.css',
         precompile: async function (input) {
-            const depends = [input];
-            const nodeSass = require('node-sass');
-            this.promise = this.promise || util.promisify(nodeSass.render);
-            return this.promise({
-                file: input,
-                // https://qiita.com/http_kato83/items/c62ee3d255f45fc30c3b
-                data: (await fs.promises.readFile(input)).toString(),
-                sourceMap: 'dummy',
-                omitSourceMapUrl: true,
-                importer: function (url, prev, done) {
-                    if (!require('url').parse(url).protocol) {
-                        if (!path.isAbsolute(url)) {
-                            url = path.join(path.dirname(prev), url);
-                        }
-                        const parts = path.parse(url);
-                        const files = [
-                            `_${parts.name}.${parts.ext}`,
-                            `_${parts.name}.scss`, `_${parts.name}.sass`,
-                            `${parts.name}.scss`, `${parts.name}.sass`,
-                        ];
-                        const basename = files.find(e => fs.existsSync(path.join(parts.dir, e)));
-                        if (basename) {
-                            url = path.join(parts.dir, basename);
-                        }
-                    }
-
-                    depends.push(url);
-                    return done();
-                },
-            }).then(result => ({
-                depends: depends,
-            }));
+            return Promise.resolve({
+                depends: [input],
+            });
         },
         compile: async function (input, options) {
-            // https://github.com/sass/node-sass
-            const nodeSass = require('node-sass');
-            this.promise = this.promise || util.promisify(nodeSass.render);
-            return this.promise({
+            // https://sass-lang.com/documentation/js-api
+            const sass = require('sass');
+            const result = sass.renderSync({
                 outputStyle: options.minified ? 'compressed' : 'expanded',
                 file: input,
-                // https://qiita.com/http_kato83/items/c62ee3d255f45fc30c3b
-                data: (await fs.promises.readFile(input)).toString(),
                 sourceMap: 'dummy',
                 omitSourceMapUrl: true,
                 sourceMapContents: true,
-            }).then(result => ({
-                content: result.css.toString(),
+            });
+            return {
+                depends: result.stats.includedFiles,
+                content: result.css.toString() + "\n",
                 mapping: JSON.parse(result.map.toString()),
-            }));
+            };
         },
         postcompile: async function (output, options) {
             return output;
@@ -80,6 +49,7 @@ const compilers = new function () {
                 sourcemap: {comment: false},
             });
             return Promise.resolve({
+                depends: [input],
                 content: renderer.render(),
                 mapping: Object.assign(renderer.sourcemap, {
                     sourcesContent: [content],
@@ -136,6 +106,7 @@ const compilers = new function () {
                 retainLines: !options.minified,
                 highlightCode: false,
             }).then(result => ({
+                depends: [input],
                 content: result.code,
                 mapping: result.map,
             }));
@@ -299,6 +270,9 @@ const transpile = async function (altfile, options) {
         await compiler.postcompile(value, options);
         await fs.promises.putFile(cachefile, JSON.stringify(value));
         options.logger.info(`done ${altfile} (${Date.now() - starttime}ms)`);
+
+        metadata[altfile] = Object.assign({}, metadata[altfile], {depends: value.depends});
+
         return value;
     }, function (error) {
         options.logger.info(`fail ${altfile} (${Date.now() - starttime}ms)`);
