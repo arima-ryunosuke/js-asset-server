@@ -72,7 +72,6 @@ test('compile scss', async () => {
 });
 
 test('compile scss import', async () => {
-    const workdir = os.tmpdir() + '/assetter-test2';
     const input = workdir + '/test.scss';
     fs.mkdirSync(workdir, {recursive: true});
     fs.writeFileSync(input, '@import "child";\nhtml{body{color:$color}}');
@@ -81,7 +80,6 @@ test('compile scss import', async () => {
     expect(result.filename).toEqual(path.resolve(workdir + '/test.css'));
     expect(result.content).toContain(`#123456`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.css.map'));
-    expect(result.mapping.sources).toEqual(["test.scss"]);
 
     result = await transpile(input, Object.assign({}, options, {nocache: false}));
     expect(result).toBeUndefined();
