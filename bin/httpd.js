@@ -13,7 +13,7 @@ module.exports = function (config) {
 
     const app = express();
 
-    app.use(cors());
+    app.use(cors({maxAge: 3600 * 24}));
     app.use(multer({storage: multer.memoryStorage()}).any());
 
     app.use(function (req, res, next) {
