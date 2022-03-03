@@ -1,6 +1,7 @@
-const config = {
+module.exports = {
     routes: {
-        "/virtual": __dirname + '/../',
+        "/virtual-script": __dirname + '/../example/script',
+        "/virtual-style": __dirname + '/../example/style',
         "/": __dirname + '/../example',
         "/script/ab.js": [
             __dirname + '/script/a.es',
@@ -14,8 +15,7 @@ const config = {
     maps: {
         "/map": __dirname + '/../example/map',
     },
+    runtime: {
+        "js": __dirname + '/script/runtime.js',
+    },
 };
-
-const assetter = require('../index');
-assetter.httpd(config);
-assetter.fsd(config);

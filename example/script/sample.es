@@ -42,9 +42,12 @@
  * object literal, template literal
  */
 !function () {
+    function tag() {
+        return 'TAG';
+    }
     const a = 'a';
     const b = `${a} and b`;
-    const hoge = {[a]: 'A', b};
+    const hoge = {[a]: 'A', b, c: tag`${a}`};
     console.log(hoge);
 }();
 
