@@ -15,6 +15,10 @@ module.exports = function (config) {
         maps: {
             "/path/to/relative": "fullpath",
         },
+        // runtime file
+        runtime: {
+            "js": "", // fullpath
+        },
         // match patterns
         patterns: [],
         // target browser

@@ -13,6 +13,8 @@
     "@babel/core": "7.*",
     "@babel/preset-env": "7.*",
     "@babel/preset-typescript": "7.*",
+    "@babel/plugin-external-helpers": "7.*",
+    "regenerator-runtime": "0.13.*",
     "sass": "1.*",
     "autoprefixer": "10.*",
     "postcss": "8.*",

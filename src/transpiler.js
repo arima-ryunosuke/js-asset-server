@@ -73,6 +73,8 @@ const compilers = new function () {
             const presets = [];
             const plugins = [];
             const inputExt = path.extname(input).toLowerCase();
+            // https://babeljs.io/docs/en/options
+            const babel = require('@babel/core');
             if (inputExt !== '.js') {
                 presets.push([
                     "@babel/env", {
@@ -81,19 +83,25 @@ const compilers = new function () {
                     }
                 ]);
                 presets.push("@babel/preset-typescript");
-                plugins.push({
-                    name: 'babel-prefix-plugin',
-                    visitor: {
-                        Program: {
-                            enter: function (path, file) {
-                                path.unshiftContainer('body', babel.template(' "use transpile";')());
+                if (options.runtime.js) {
+                    plugins.push('@babel/plugin-external-helpers');
+                    if (options.nocache || !fs.existsSync(options.runtime.js)) {
+                        fs.promises.putFile(options.runtime.js, babel.buildExternalHelpers(undefined, 'var') + await fs.promises.readFile(__dirname + '/../node_modules/regenerator-runtime/runtime.js'));
+                    }
+                }
+                else {
+                    plugins.push({
+                        name: 'babel-prefix-plugin',
+                        visitor: {
+                            Program: {
+                                enter: function (path, file) {
+                                    path.unshiftContainer('body', babel.template(' "use transpile";')());
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
-            // https://babeljs.io/docs/en/options
-            const babel = require('@babel/core');
             return babel.transformFileAsync(input, {
                 ast: false,
                 babelrc: false,

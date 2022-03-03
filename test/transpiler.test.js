@@ -8,6 +8,7 @@ const options = {
     rootdir: workdir,
     localdir: '/routename',
     tmpdir: os.tmpdir(),
+    runtime: {},
     patterns: [],
     outfile: null,
     nocache: true,
@@ -123,6 +124,18 @@ test('compile es', async () => {
     expect(result.content).toEqual(`"use transpile";(function () {return 123;});
 //# sourceMappingURL=test.js.map`);
     expect(result.mappath).toEqual(path.resolve(workdir + '/test.js.map'));
+});
+
+test('compile es runtime', async () => {
+    const input = workdir + '/test.es';
+    const runtime = workdir + '/runtime.js';
+    fs.writeFileSync(runtime, '');
+    fs.writeFileSync(input, 'class Test {}');
+    const result = await transpile(input, Object.assign({}, options, {runtime: {js: runtime}}));
+    expect(result.content).toContain(`babelHelpers`);
+    const runtime_contents = fs.readFileSync(runtime).toString();
+    expect(runtime_contents).toContain('babelHelpers');
+    expect(runtime_contents).toContain('AsyncGenerator');
 });
 
 test('compile ts', async () => {
