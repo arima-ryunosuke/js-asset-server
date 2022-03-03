@@ -2,7 +2,11 @@ const {fs, path, logger} = require('./util');
 const os = require('os');
 
 module.exports = function (config) {
+    if (config.configured) {
+        return config;
+    }
     const results = Object.assign({
+        configured: true,
         // temporary directory (upload file, cache file, or etc)
         tmpdir: os.tmpdir(),
         // mount route

@@ -4,6 +4,9 @@
   "description": "asset server",
   "author": "ryunosuke",
   "main": "index.js",
+  "bin": {
+    "assetter": "assetter.js"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
