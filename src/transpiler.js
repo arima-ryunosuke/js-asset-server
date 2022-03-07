@@ -86,7 +86,7 @@ const compilers = new function () {
                 if (options.runtime.js) {
                     plugins.push('@babel/plugin-external-helpers');
                     if (options.nocache || !fs.existsSync(options.runtime.js)) {
-                        fs.promises.putFile(options.runtime.js, babel.buildExternalHelpers(undefined, 'var') + await fs.promises.readFile(__dirname + '/../node_modules/regenerator-runtime/runtime.js'));
+                        fs.promises.putFile(options.runtime.js, babel.buildExternalHelpers(undefined, 'var') + await fs.promises.readFile(require.resolve('regenerator-runtime')));
                     }
                 }
                 else {
