@@ -1,4 +1,5 @@
 module.exports = {
+    daemons: ['run', 'httpd', 'fsd'],
     routes: {
         "/virtual-script": __dirname + '/../example/script',
         "/virtual-style": __dirname + '/../example/style',
