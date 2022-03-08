@@ -1,6 +1,6 @@
 {
   "name": "@ryunosuke/assetter",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "asset server",
   "author": "ryunosuke",
   "main": "index.js",
