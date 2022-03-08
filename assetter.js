@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
-const path = require('path');
+const {fs, path} = require('./src/util');
 
-const config = require('./src/configure.js')(require(path.resolve(process.argv[2])));
+const configFile = fs.detectSync(['config.js', 'config.json', 'config.dist.js', 'config.dist.json'], process.argv[2]) || process.argv[2];
+const config = require('./src/configure.js')(require(path.resolve(configFile)));
+
+if (config.daemons instanceof Array) {
+    config.daemons = Object.fromEntries(config.daemons.map(daemon => [daemon, {}]));
+}
 
 const assetter = require('./index.js');
-assetter['run'](Object.assign({}, config, {nocache: true}));
-assetter['httpd'](config);
+for (const [daemon, c] of Object.entries(config.daemons)) {
+    assetter[daemon](Object.assign({}, config, c));
+}

@@ -3,6 +3,16 @@ exports.fs = (function () {
     const fs = Object.assign({}, require('fs'));
     fs.promises = Object.assign({}, fs.promises);
 
+    fs.detectSync = function (filenames, directory) {
+        directory = directory || '';
+        for (const filename of filenames) {
+            const fullpath = path.resolve(directory, filename);
+            if (fs.existsSync(fullpath)) {
+                return fullpath;
+            }
+        }
+    };
+
     fs.promises.mtime = async function (filename) {
         const stat = await this.stat(filename).catch(() => ({mtime: new Date(0)}));
         return stat.mtime;

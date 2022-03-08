@@ -1,6 +1,18 @@
 const os = require('os');
 const {fs, path} = require('../src/util');
 
+test('fs.detectSync', async () => {
+    const tmpdir = os.tmpdir() + '/.assetter-fs';
+    fs.writeFileSync(tmpdir + '/file-a', 'A');
+    fs.writeFileSync(tmpdir + '/file-b', 'B');
+    fs.writeFileSync(tmpdir + '/file-c', 'C');
+
+    expect(fs.detectSync(['file-a', 'file-b', 'file-c'], tmpdir)).toEqual(path.resolve(tmpdir, 'file-a'));
+    expect(fs.detectSync(['file-X', 'file-b', 'file-c'], tmpdir)).toEqual(path.resolve(tmpdir, 'file-b'));
+    expect(fs.detectSync(['file-X', 'file-Y', 'file-c'], tmpdir)).toEqual(path.resolve(tmpdir, 'file-c'));
+    expect(fs.detectSync(['file-X', 'file-Y', 'file-Z'], tmpdir)).toBeUndefined();
+});
+
 test('fs.mtime', async () => {
     expect(await fs.promises.mtime('notfound')).toEqual(new Date(0));
 });
