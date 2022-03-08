@@ -1,4 +1,4 @@
-const {fs, path} = require('../src/util');
+const {fs, path, logger} = require('../src/util');
 
 const transpiler = require('../src/transpiler');
 
@@ -20,6 +20,7 @@ module.exports = function (config) {
     }
 
     for (const [localdir, rootdir] of Object.entries(options.routes)) {
+        logger.info(`[RUN] ${localdir}:${rootdir}`);
         const curoptions = Object.assign({}, options, {
             rootdir: rootdir,
             localdir: localdir,

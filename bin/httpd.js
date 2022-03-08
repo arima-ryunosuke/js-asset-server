@@ -132,6 +132,6 @@ module.exports = function (config) {
     });
 
     app.listen(options.port, options.host, function () {
-        logger.info(`[HTTP] ${options.host}:${options.port}`);
+        logger.info(`[HTTPD] ${options.host}:${options.port}`);
     });
 };

@@ -7,7 +7,7 @@ module.exports = function (config) {
     const options = require('../src/configure')(config);
 
     for (const [localdir, rootdir] of Object.entries(options.routes)) {
-        logger.info(`[WATCH] ${rootdir}`);
+        logger.info(`[FSD] ${rootdir}`);
 
         chokidar.watch(rootdir, {
             ignoreInitial: true,
