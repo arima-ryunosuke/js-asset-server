@@ -7,6 +7,8 @@ module.exports = function (config) {
     }
     const results = Object.assign({
         configured: true,
+        // launch daemon when run assetter.js
+        daemons: ['run', 'httpd', 'fsd'],
         // temporary directory (upload file, cache file, or etc)
         tmpdir: os.tmpdir(),
         // mount route
