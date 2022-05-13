@@ -1,10 +1,9 @@
 const {fs, path, logger} = require('../src/util');
 const chokidar = require('chokidar');
 
-const transpiler = require('../src/transpiler');
-
 module.exports = function (config) {
     const options = require('../src/configure')(config);
+    const transpiler = new (require('../src/transpiler'))(options);
 
     for (const [localdir, rootdir] of Object.entries(options.routes)) {
         logger.info(`[FSD] ${rootdir}`);

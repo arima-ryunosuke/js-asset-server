@@ -3,6 +3,7 @@ const {fs, path} = require('../src/util');
 
 test('fs.detectSync', async () => {
     const tmpdir = os.tmpdir() + '/.assetter-fs';
+    fs.mkdirSync(tmpdir, {recursive: true});
     fs.writeFileSync(tmpdir + '/file-a', 'A');
     fs.writeFileSync(tmpdir + '/file-b', 'B');
     fs.writeFileSync(tmpdir + '/file-c', 'C');
@@ -23,7 +24,7 @@ test('fs.putFile', async () => {
         await fs.promises.unlink(target);
         await fs.promises.rmdir(path.dirname(target));
     }
-    await fs.promises.putFile(os.tmpdir() + '/.assetter-fs/sub1/sub2/hoge.txt');
+    await fs.promises.putFile(os.tmpdir() + '/.assetter-fs/sub1/sub2/hoge.txt', '');
     expect(fs.existsSync(os.tmpdir() + '/.assetter-fs/sub1/sub2/hoge.txt')).toBeTruthy();
 });
 

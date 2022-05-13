@@ -1,273 +1,99 @@
 const {fs, path} = require('./util');
-const url = require('url');
 const minimatch = require('minimatch');
-const sourcemapmerge = require('merge-source-map');
-const crypto = require('crypto');
 
-const compilers = new function () {
-    this['.sass'] = this['.scss'] = {
-        ext: '.css',
-        precompile: async function (input) {
-            return Promise.resolve({
-                depends: [input],
-            });
-        },
-        compile: async function (input, options) {
-            // https://sass-lang.com/documentation/js-api
-            const sass = require('sass');
-            const result = sass.renderSync({
-                outputStyle: options.minified ? 'compressed' : 'expanded',
-                file: input,
-                sourceMap: 'dummy',
-                omitSourceMapUrl: true,
-                sourceMapContents: true,
-            });
-            return {
-                depends: result.stats.includedFiles,
-                content: result.css.toString() + "\n",
-                mapping: JSON.parse(result.map.toString()),
-            };
-        },
-        postcompile: async function (output, options) {
-            return output;
-        },
-    };
+module.exports = class {
+    metadata = {};
+    compilers = {};
+    processors = {};
 
-    this['.styl'] = this['.stylus'] = {
-        ext: '.css',
-        precompile: async function (input) {
-            return Promise.resolve({
-                depends: [input],
-            });
-        },
-        compile: async function (input, options) {
-            // https://stylus-lang.com/docs/executable.html
-            const content = (await fs.promises.readFile(input)).toString();
-            const renderer = require('stylus')(content, {
-                filename: input,
-                compress: options.minified,
-                sourcemap: {comment: false},
-            });
-            return Promise.resolve({
-                depends: [input],
-                content: renderer.render(),
-                mapping: Object.assign(renderer.sourcemap, {
-                    sourcesContent: [content],
-                }),
-            })
-        },
-        postcompile: async function (output, options) {
-            return output;
-        },
-    };
+    constructor(options) {
+        this.compilers = options.compilers;
+        this.processors = options.processors;
+    }
 
-    this['.es'] = this['.es6'] = this['.ts'] = {
-        ext: '.js',
-        precompile: async function (input) {
-            return Promise.resolve({
-                depends: [input],
-            });
-        },
-        compile: async function (input, options) {
-            // fix later (normally should implement compile for each extension)
-            const presets = [];
-            const plugins = [];
-            const inputExt = path.extname(input).toLowerCase();
-            // https://babeljs.io/docs/en/options
-            const babel = require('@babel/core');
-            if (inputExt !== '.js') {
-                presets.push([
-                    "@babel/env", {
-                        modules: false,
-                        targets: options.browserslist,
+    getAltfile(filename, forced = false) {
+        const parts = path.parse(filename);
+        const basename = path.join(parts.dir, path.basename(parts.name, '.min'));
+        const minified = forced || parts.name.endsWith('.min');
+
+        for (const [inputExt, compiler] of Object.entries(this.compilers)) {
+            if (compiler.getOutputExtension() === parts.ext) {
+                if (minified || inputExt !== parts.ext) {
+                    const altfile = basename + inputExt;
+                    if (fs.existsSync(altfile)) {
+                        return altfile;
                     }
-                ]);
-                presets.push("@babel/preset-typescript");
-                if (options.runtime.js) {
-                    plugins.push('@babel/plugin-external-helpers');
-                    if (options.nocache || !fs.existsSync(options.runtime.js)) {
-                        fs.promises.putFile(options.runtime.js, babel.buildExternalHelpers(undefined, 'var') + await fs.promises.readFile(require.resolve('regenerator-runtime')));
-                    }
-                }
-                else {
-                    plugins.push({
-                        name: 'babel-prefix-plugin',
-                        visitor: {
-                            Program: {
-                                enter: function (path, file) {
-                                    path.unshiftContainer('body', babel.template(' "use transpile";')());
-                                }
-                            }
-                        }
-                    });
                 }
             }
-            return babel.transformFileAsync(input, {
-                ast: false,
-                babelrc: false,
-                presets: presets,
-                plugins: plugins,
-                inputSourceMap: false,
-                sourceMaps: true,
-                comments: false,
-                compact: options.minified,
-                retainLines: !options.minified,
-                highlightCode: false,
-            }).then(result => ({
-                depends: [input],
-                content: result.code,
-                mapping: result.map,
-            }));
-        },
-        postcompile: async function (output, options) {
-            return output;
-        },
-    };
-
-    this['.css'] = Object.assign({
-        mappingURL: url => `\n/*# sourceMappingURL=${url} */`,
-        complete: async function (value, options) {
-            const posted = await require('postcss')([
-                function (css) {
-                    const supportedProps = [
-                        'background',
-                        'background-image',
-                        'border-image',
-                        'behavior',
-                        'list-style',
-                        'src',
-                        'cursor',
-                    ];
-                    css.walkDecls(function (decl) {
-                        if (supportedProps.includes(decl.prop)) {
-                            decl.value = decl.value.replace(/url\s*\(\s*(['"])?([^'")]+)(['"])?\s*\)/gi, function (match, s, uri, e) {
-                                const parts = url.parse(uri);
-                                const fullpath = path.isAbsolute(parts.pathname)
-                                    ? path.join(options.rootdir, parts.pathname.substring(options.localdir.length))
-                                    : path.join(path.dirname(value.filename), parts.pathname)
-                                ;
-                                if (fs.existsSync(fullpath)) {
-                                    const sha1 = crypto.createHash('sha1');
-                                    sha1.update(fs.readFileSync(fullpath));
-                                    const id = sha1.digest('hex');
-                                    const query = parts.query ? '&' + parts.query : '';
-                                    const hash = parts.hash ? parts.hash : '';
-                                    return `url(${s || ''}${parts.pathname}?${id}${query}${hash}${e || ''})`;
-                                }
-                                return match;
-                            });
-                        }
-                    });
-                },
-                require('autoprefixer')({
-                    grid: "autoplace",
-                    overrideBrowserslist: options.browserslist,
-                }),
-            ]).process(value.content, {
-                from: value.filename,
-                map: {
-                    inline: false,
-                    sourcesContent: true,
-                    annotation: false,
-                },
-            });
-            value.content = posted.css;
-            value.mapping = sourcemapmerge(value.mapping, posted.map.toString());
-        },
-    }, this['.sass']);
-
-    this['.js'] = Object.assign({
-        mappingURL: url => `\n//# sourceMappingURL=${url}`,
-        complete: async function (value, options) {},
-    }, this['.es']);
-};
-
-module.exports.regsiter = function (altext, compiler, similar = null) {
-    if (typeof (compiler) === 'string') {
-        similar = compiler;
-        compiler = {};
+        }
+        return null;
     }
-    compilers[altext] = Object.assign({}, compilers[similar || altext] || {}, compiler);
-};
 
-module.exports.getAltfile = function (filename, forced = false) {
-    const parts = path.parse(filename);
-    const basename = path.join(parts.dir, path.basename(parts.name, '.min'));
-    const minified = forced || parts.name.endsWith('.min');
+    canTranspile(filename) {
+        const parts = path.parse(filename);
+        const minified = parts.name.endsWith('.min');
 
-    const alts = Object.entries(compilers)
-        .filter(entry => parts.ext === entry[1].ext)
-        .sort((a, b) => a[1].ext === b[0] ? -1 : 1)
-        .map(entry => entry[0])
-        .filter(ext => minified || ext !== parts.ext)
-    ;
+        if (minified) {
+            return false;
+        }
 
-    const alt = alts.find(alt => fs.existsSync(basename + alt));
-    return alt ? basename + alt : null;
-};
+        return !!this.compilers[parts.ext];
+    }
 
-module.exports.canTranspile = function (filename) {
-    const parts = path.parse(filename);
+    async compile(altfile, options) {
+        altfile = path.resolve(altfile);
 
-    const alts = Object.entries(compilers)
-        .filter(entry => entry[0] !== entry[1].ext)
-        .map(entry => entry[0])
-    ;
-    return alts.includes(parts.ext);
-};
+        for (const pattern of options.patterns) {
+            if (!minimatch(altfile, pattern)) {
+                options.logger.info(`skip ${altfile} (no match)`);
+                return;
+            }
+        }
 
-const metadata = {};
-const transpile = async function (altfile, options) {
-    altfile = path.resolve(altfile);
-
-    for (const pattern of options.patterns) {
-        if (!minimatch(altfile, pattern)) {
-            options.logger.info(`skip ${altfile} (no match)`);
+        const parts = path.parse(altfile);
+        const compiler = this.compilers[parts.ext];
+        if (!compiler) {
+            options.logger.info(`skip ${altfile} (not supported)`);
             return;
         }
-    }
 
-    const parts = path.parse(altfile);
-    const compiler = compilers[parts.ext] || {};
-    const outfile = path.resolve(options.outfile || path.changeExt(altfile, (options.minified ? '.min' : '') + compiler.ext));
-    const cachefile = path.join(options.tmpdir, 'assetter', 'transpiled', altfile.replace(':', ';') + '.min-' + options.minified + '.json');
+        const outfile = path.resolve(options.outfile || path.changeExt(altfile, (options.minified ? '.min' : '') + compiler.getOutputExtension()));
+        const cachefile = path.join(options.tmpdir, 'assetter', 'transpiled', altfile.replace(':', ';') + '.min-' + options.minified + '.json');
 
-    // for skip
-    if (!Object.keys(compiler).length) {
-        options.logger.info(`skip ${altfile} (not supported)`);
-        return;
-    }
-    if (options.minified && parts.name.endsWith('.min')) {
-        options.logger.info(`skip ${altfile} (already minified)`);
-        return;
-    }
-    if (outfile === altfile) {
-        options.logger.info(`skip ${altfile} (same file)`);
-        return;
-    }
+        // for skip
+        if (options.minified && parts.name.endsWith('.min')) {
+            options.logger.info(`skip ${altfile} (already minified)`);
+            return;
+        }
+        if (outfile === altfile) {
+            options.logger.info(`skip ${altfile} (same file)`);
+            return;
+        }
 
-    if (options.nocache) {
-        delete metadata[altfile];
-    }
-    metadata[altfile] = metadata[altfile] || await compiler.precompile(altfile);
-    const altmtime = Math.max(options.altmtime, ...await Promise.all(metadata[altfile].depends.map(v => fs.promises.mtime(v))));
+        if (options.nocache) {
+            delete this.metadata[altfile];
+        }
+        const altmtime = Math.max(options.altmtime, ...await Promise.all((this.metadata[altfile]?.depends ?? []).map(v => fs.promises.mtime(v))));
 
-    if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
-        options.logger.info(`skip ${altfile} (not modified)`);
-        return;
-    }
+        if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
+            options.logger.info(`skip ${altfile} (not modified)`);
+            return;
+        }
 
-    const starttime = Date.now();
+        const starttime = Date.now();
 
-    // for cache
-    if (!options.nocache && await fs.promises.mtime(cachefile) > altmtime) {
-        const value = JSON.parse((await fs.promises.readFile(cachefile)).toString());
-        options.logger.info(`cache ${altfile} (${Date.now() - starttime}ms)`);
-        return value;
-    }
+        // for cache
+        if (!options.nocache && await fs.promises.mtime(cachefile) > altmtime) {
+            const value = JSON.parse((await fs.promises.readFile(cachefile)).toString());
+            options.logger.info(`cache ${altfile} (${Date.now() - starttime}ms)`);
+            return value;
+        }
 
-    // for compile
-    return compiler.compile(altfile, options).then(async function (value) {
+        // for compile
+        const value = await compiler.compile(altfile, options).catch(function (error) {
+            options.logger.info(`fail ${altfile} (${Date.now() - starttime}ms)`);
+            throw error;
+        })
         value.filename = outfile;
         value.mapping.file = path.join(options.localdir, path.relative(options.rootdir, outfile)).replace(/\\/g, '/');
         const relative = path.relative(options.rootdir, altfile);
@@ -275,70 +101,63 @@ const transpile = async function (altfile, options) {
             value.mapping.sources = [path.basename(altfile)];
         }
 
-        await compiler.postcompile(value, options);
         await fs.promises.putFile(cachefile, JSON.stringify(value));
         options.logger.info(`done ${altfile} (${Date.now() - starttime}ms)`);
 
-        metadata[altfile] = Object.assign({}, metadata[altfile], {depends: value.depends});
+        this.metadata[altfile] = Object.assign({}, this.metadata[altfile], {depends: value.depends});
 
         return value;
-    }, function (error) {
-        options.logger.info(`fail ${altfile} (${Date.now() - starttime}ms)`);
-        throw error;
-    });
-};
-
-module.exports.transpile = async function (altfile, options = {}) {
-    options = Object.assign({}, {
-        maps: "",        // "": same location, string: specify relative, true: data URI, false: no map file, object: see code
-        outfile: null,   // output filename (null: same direcotry)
-        minified: false, // true: minify, false: human readable, null: auto detect by outfile
-        nocache: false,  // true: nouse cache file
-        nowrite: false,  // true: nowriting file
-        logger: console, // logger instance
-    }, options);
-
-    if (options.minified === null) {
-        if (options.outfile) {
-            options.minified = path.parse(options.outfile).name.endsWith('.min');
-        }
-        else {
-            options.minified = false;
-        }
     }
 
-    if (!(altfile instanceof Array)) {
-        altfile = [altfile];
-    }
-    options.altmtime = Math.max(...await Promise.all(altfile.map(v => fs.promises.mtime(v))));
-    const result = Promise.all(altfile.map(file => transpile(file, options))).then(function (values) {
-        values = values.filter(v => v);
-        if (values.length) {
-            // https://qiita.com/kozy4324/items/1a0f5c1269eafdebd3f8
-            return {
-                filename: options.outfile || path.combineName(',', ...values.map(v => v.filename)) || 'combined' + path.extname(values[0].filename),
-                content: values.map(v => v.content).join("\n"),
-                mapping: values.length === 1 ? values[0].mapping : {
-                    version: 3,
-                    sections: values.map((v, i) => ({
-                        offset: {
-                            line: values[i - 1] ? values[i - 1].content.split("\n").length : 0,
-                            column: 0,
-                        },
-                        map: v.mapping,
-                    })),
-                },
-            };
-        }
-    });
+    async transpile(altfile, options = {}) {
+        options = Object.assign({}, {
+            maps: "",        // "": same location, string: specify relative, true: data URI, false: no map file, object: see code
+            outfile: null,   // output filename (null: same direcotry)
+            minified: false, // true: minify, false: human readable, null: auto detect by outfile
+            nocache: false,  // true: nouse cache file
+            nowrite: false,  // true: nowriting file
+            logger: console, // logger instance
+        }, options);
 
-    return result.then(async result => {
-        if (!result) {
+        if (options.minified == null) {
+            if (options.outfile) {
+                options.minified = path.parse(options.outfile).name.endsWith('.min');
+            }
+            else {
+                options.minified = false;
+            }
+        }
+
+        if (!(altfile instanceof Array)) {
+            altfile = [altfile];
+        }
+
+        options.altmtime = Math.max(...await Promise.all(altfile.map(v => fs.promises.mtime(v))));
+        const values = (await Promise.all(altfile.map(file => this.compile(file, options)))).filter(v => v);
+        if (!values.length) {
             return;
         }
 
+        // https://qiita.com/kozy4324/items/1a0f5c1269eafdebd3f8
+        const compiled = {
+            filename: options.outfile || path.combineName(',', ...values.map(v => v.filename)) || 'combined' + path.extname(values[0].filename),
+            content: values.map(v => v.content).join("\n"),
+            mapping: values.length === 1 ? values[0].mapping : {
+                version: 3,
+                sections: values.map((v, i) => ({
+                    offset: {
+                        line: values[i - 1] ? values[i - 1].content.split("\n").length : 0,
+                        column: 0,
+                    },
+                    map: v.mapping,
+                })),
+            },
+        };
+
+        const processor = this.processors[path.extname(compiled.filename)];
+        await processor.process(compiled, options);
+
         const results = [];
-        const compiler = compilers[path.extname(result.filename)];
         const writeFile = function (filename, content) {
             if (!options.nowrite) {
                 results.push(fs.promises.putFile(filename, content).then(function () {
@@ -347,35 +166,33 @@ module.exports.transpile = async function (altfile, options = {}) {
             }
         };
 
-        await compiler.complete(result, options);
-
         if (options.maps === true) {
-            const map = Buffer.from(JSON.stringify(result.mapping)).toString('base64');
-            result.mappath = `data:application/json;charset=utf-8;base64,` + map;
-            writeFile(result.filename, result.content += compiler.mappingURL(result.mappath));
+            const map = Buffer.from(JSON.stringify(compiled.mapping)).toString('base64');
+            compiled.mappath = `data:application/json;charset=utf-8;base64,` + map;
+            writeFile(compiled.filename, compiled.content += processor.mappingURL(compiled.mappath));
         }
         else if (options.maps === false) {
-            result.mappath = null;
-            writeFile(result.filename, result.content);
+            compiled.mappath = null;
+            writeFile(compiled.filename, compiled.content);
         }
         else if (typeof (options.maps) === 'string') {
-            const map = JSON.stringify(result.mapping, null, options.minified ? "" : "\t");
-            const localname = `${path.basename(result.filename)}.map`;
+            const map = JSON.stringify(compiled.mapping, null, options.minified ? "" : "\t");
+            const localname = `${path.basename(compiled.filename)}.map`;
             const url = path.join(options.maps, localname);
-            result.mappath = path.join(path.dirname(result.filename), url);
-            writeFile(result.filename, result.content += compiler.mappingURL(url.replace(/\\/g, '/')));
-            writeFile(result.mappath, map);
+            compiled.mappath = path.join(path.dirname(compiled.filename), url);
+            writeFile(compiled.filename, compiled.content += processor.mappingURL(url.replace(/\\/g, '/')));
+            writeFile(compiled.mappath, map);
         }
         else {
-            const map = JSON.stringify(result.mapping, null, options.minified ? "" : "\t");
+            const map = JSON.stringify(compiled.mapping, null, options.minified ? "" : "\t");
             for (const [relative, absolute] of Object.entries(options.maps)) {
-                const localname = path.join(options.localdir, path.relative(options.rootdir, result.filename));
+                const localname = path.join(options.localdir, path.relative(options.rootdir, compiled.filename));
                 const url = path.join(relative, `${localname}.map`);
-                result.mappath = path.join(absolute, `${localname}.map`);
-                writeFile(result.filename, result.content += compiler.mappingURL(url.replace(/\\/g, '/')));
-                writeFile(result.mappath, map);
+                compiled.mappath = path.join(absolute, `${localname}.map`);
+                writeFile(compiled.filename, compiled.content += processor.mappingURL(url.replace(/\\/g, '/')));
+                writeFile(compiled.mappath, map);
             }
         }
-        return Promise.all(results).then(() => result);
-    });
+        return Promise.all(results).then(() => compiled);
+    }
 };

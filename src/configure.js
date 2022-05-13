@@ -7,6 +7,27 @@ module.exports = function (config) {
     }
     const results = Object.assign({
         configured: true,
+        // support compiler
+        compilers: {
+            '.es': new (require('./compiler/ecma-script'))(),
+            '.es6': new (require('./compiler/ecma-script'))(),
+
+            '.ts': new (require('./compiler/type-script'))(),
+
+            '.sass': new (require('./compiler/syntactically-awesome-style-sheet'))(),
+            '.scss': new (require('./compiler/syntactically-awesome-style-sheet'))(),
+
+            '.styl': new (require('./compiler/stylus'))(),
+            '.stylus': new (require('./compiler/stylus'))(),
+
+            '.js': new (require('./compiler/ecma-script'))(), // for minify
+            '.css': new (require('./compiler/syntactically-awesome-style-sheet'))(), // for minify
+        },
+        // postprocessor
+        processors: {
+            '.js': new (require('./processor/java-script'))([]),
+            '.css': new (require('./processor/cascading-style-sheets'))(['urlhash', 'autoprefixer']),
+        },
         // launch daemon when run assetter.js
         daemons: ['run', 'httpd', 'fsd'],
         // temporary directory (upload file, cache file, or etc)

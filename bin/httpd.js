@@ -6,10 +6,9 @@ const multer = require('multer');
 const url = require('url');
 const querystring = require('querystring');
 
-const transpiler = require('../src/transpiler');
-
 module.exports = function (config) {
     const options = require('../src/configure')(config);
+    const transpiler = new (require('../src/transpiler'))(options);
 
     const app = express();
 
