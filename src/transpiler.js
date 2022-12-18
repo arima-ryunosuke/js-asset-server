@@ -2,7 +2,8 @@ const {fs, path} = require('./util');
 const minimatch = require('minimatch');
 
 module.exports = class {
-    metadata = {};
+    static metadata = {};
+
     compilers = {};
     processors = {};
 
@@ -71,9 +72,9 @@ module.exports = class {
         }
 
         if (options.nocache) {
-            delete this.metadata[altfile];
+            delete this.constructor.metadata[altfile];
         }
-        const altmtime = Math.max(options.altmtime, ...await Promise.all((this.metadata[altfile]?.depends ?? []).map(v => fs.promises.mtime(v))));
+        const altmtime = Math.max(options.altmtime, ...await Promise.all((this.constructor.metadata[altfile]?.depends ?? []).map(v => fs.promises.mtime(v))));
 
         if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
             options.logger.info(`skip ${altfile} (not modified)`);
@@ -104,7 +105,7 @@ module.exports = class {
         await fs.promises.putFile(cachefile, JSON.stringify(value));
         options.logger.info(`done ${altfile} (${Date.now() - starttime}ms)`);
 
-        this.metadata[altfile] = Object.assign({}, this.metadata[altfile], {depends: value.depends});
+        this.constructor.metadata[altfile] = Object.assign({}, this.constructor.metadata[altfile], {depends: value.depends});
 
         return value;
     }
