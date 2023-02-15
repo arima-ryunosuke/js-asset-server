@@ -54,6 +54,18 @@ if multiple file requested, combine all request files.
 
 ## Release
 
+### internal memo
+
+podman login docker.io
+podman build ./ -t docker.io/arimaryunosuke/assetter:latest
+podman run --rm\
+  -e ASSETTER_CONFIG=config\
+  -v ./example/:/assetter/example\
+  -p 8080:8080\
+  docker.io/arimaryunosuke/assetter:latest /assetter/example
+
+podman push docker.io/arimaryunosuke/assetter:latest --format v2s2
+
 ### future task
 
 - Refactor (division of responsibilities)
