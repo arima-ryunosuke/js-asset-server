@@ -8,17 +8,17 @@ module.exports = function (config) {
     for (const [localdir, rootdir] of Object.entries(options.routes)) {
         logger.info(`[FSD] ${rootdir}`);
 
-        chokidar.watch(rootdir, {
+        chokidar.watch(rootdir, Object.assign({
             ignoreInitial: true,
-            ignored: /(^|[\/\\])\../,
             persistent: true,
-            awaitWriteFinish: options.wait,
-        }).on('all', (eventName, path) => {
+        }, options)).on('all', (eventName, path) => {
+            logger.debug(`${eventName} ${path}`);
             if (['add', 'change'].includes(eventName) && transpiler.canTranspile(path)) {
+                logger.info(`${eventName} ${path}`);
                 transpiler.transpile(path, Object.assign({}, options, {
                     rootdir: rootdir,
                     localdir: localdir,
-                })).catch(e => console.error(e));
+                })).catch(e => logger.error(e));
             }
         });
     }
