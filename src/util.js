@@ -20,7 +20,7 @@ exports.fs = (function () {
 
     fs.promises.putFile = async function (filename, contents) {
         await this.mkdir(path.dirname(filename), {recursive: true});
-        return await this.writeFile(filename, contents);
+        return this.writeFile(filename, contents);
     };
 
     return fs;
