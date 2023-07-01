@@ -48,6 +48,8 @@ module.exports = function (config) {
         },
         // match patterns
         patterns: [],
+        // minified: false:no minify, true:always, null:by extension
+        minified: null,
         // target browser
         browserslist: [],
         // bind address for httpd
