@@ -61,3 +61,18 @@ test('compile es runtime', async () => {
     expect(runtime_contents).toContain('babelHelpers');
     expect(runtime_contents).toContain('AsyncGenerator');
 });
+
+test('compile es require', async () => {
+    const input = workdir + '/test.es';
+    const require1 = workdir + '/f1.es';
+    const require2 = workdir + '/f2.js';
+    fs.writeFileSync(input, 'require("./f1.es");\nrequire("./f2.js")');
+    fs.writeFileSync(require1, 'console.log("this is es")');
+    fs.writeFileSync(require2, 'console.log("this is js")');
+    const result = await compiler.compile(input, Object.assign({}, options));
+    expect(result.content).toContain(`console.log("this is es")`);
+    expect(result.content).toContain(`console.log("this is js")`);
+    expect(result.depends).toContain(input);
+    expect(result.depends).toContain(path.normalize(require1));
+    expect(result.depends).toContain(path.normalize(require2));
+});
