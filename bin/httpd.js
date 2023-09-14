@@ -130,7 +130,12 @@ module.exports = function (config) {
         res.status(500).send(err + '\n\n' + JSON.stringify(err, null, "\t"));
     });
 
-    app.listen(options.port, options.host, function () {
+    const server = require(options.protocol).createServer({
+        key: options.key ? fs.readFileSync(options.key) : undefined,
+        cert: options.cert ? fs.readFileSync(options.cert) : undefined,
+    }, app);
+
+    server.listen(options.port, options.host, function () {
         logger.info(`[HTTPD] ${options.host}:${options.port}`);
     });
 };
