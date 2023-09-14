@@ -5,6 +5,12 @@ module.exports = function (config) {
     if (config.configured) {
         return config;
     }
+
+    config.daemons = config.daemons ?? {};
+    if (config.daemons instanceof Array) {
+        config.daemons = Object.fromEntries(config.daemons.map(daemon => [daemon, {}]));
+    }
+
     const results = Object.assign({
         configured: true,
         // support compiler
@@ -28,8 +34,6 @@ module.exports = function (config) {
             '.js': new (require('./processor/java-script'))([]),
             '.css': new (require('./processor/cascading-style-sheets'))(['urlhash', 'autoprefixer']),
         },
-        // launch daemon when run assetter.js
-        daemons: ['run', 'httpd', 'fsd'],
         // temporary directory (upload file, cache file, or etc)
         tmpdir: os.tmpdir(),
         // mount route
@@ -52,15 +56,43 @@ module.exports = function (config) {
         minified: null,
         // target browser
         browserslist: [],
-        // bind address for httpd
-        host: '0.0.0.0',
-        // listen port for httpd
-        port: 8080,
-        // awaitWriteFinish for fsd
-        wait: true,
         // log level: ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR']
         loglevel: 'INFO',
     }, config);
+
+    if (config.daemons.run) {
+        config.daemons.run = Object.assign({}, config.daemons.run);
+    }
+    // @see https://nodejs.org/api/http.html#httpcreateserveroptions-requestlistener
+    if (config.daemons.httpd) {
+        config.daemons.httpd = Object.assign({
+            // http/https
+            protocol: 'http',
+            // bind address
+            host: '0.0.0.0',
+            // listen port
+            port: 8080,
+        }, config.daemons.httpd);
+    }
+    // @see https://nodejs.org/api/https.html#httpscreateserveroptions-requestlistener
+    if (config.daemons.httpsd) {
+        config.daemons.httpsd = Object.assign({
+            // http/https
+            protocol: 'https',
+            // bind address
+            host: '0.0.0.0',
+            // listen port
+            port: 8443,
+            // tls key/cert
+            key: undefined,
+            cert: undefined,
+        }, config.daemons.httpsd);
+    }
+    // @see https://github.com/paulmillr/chokidar
+    if (config.daemons.fsd) {
+        config.daemons.fsd = Object.assign({
+            awaitWriteFinish: true,}, config.daemons.fsd);
+    }
 
     const routes = {};
     const aliases = {};
