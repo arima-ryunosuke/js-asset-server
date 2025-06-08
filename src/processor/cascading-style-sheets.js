@@ -1,9 +1,9 @@
 const url = require("url");
 const {path, fs} = require("../util");
 const crypto = require("crypto");
-const sourcemapmerge = require("merge-source-map");
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
+const tailwindcss = require('@tailwindcss/postcss');
 
 module.exports = class {
     modes = {};
@@ -49,6 +49,9 @@ module.exports = class {
                 overrideBrowserslist: options.browserslist,
             }, this.modes.autoprefixer)));
         }
+        if (this.modes.tailwind) {
+            postfuncs.push(tailwindcss(this.modes.tailwind));
+        }
 
         if (postfuncs.length === 0) {
             return value;
@@ -60,10 +63,11 @@ module.exports = class {
                 inline: false,
                 sourcesContent: true,
                 annotation: false,
+                prev: value.mapping,
             },
         });
         value.content = posted.css;
-        value.mapping = sourcemapmerge(value.mapping, posted.map.toString());
+        value.mapping = posted.map.toJSON();
 
         return value;
     }

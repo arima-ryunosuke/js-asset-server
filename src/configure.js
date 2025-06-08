@@ -23,6 +23,8 @@ module.exports = function (config) {
             '.sass': new (require('./compiler/syntactically-awesome-style-sheet'))(),
             '.scss': new (require('./compiler/syntactically-awesome-style-sheet'))(),
 
+            '.pcss': new (require('./compiler/post-css'))(),
+
             '.styl': new (require('./compiler/stylus'))(),
             '.stylus': new (require('./compiler/stylus'))(),
 
@@ -33,6 +35,7 @@ module.exports = function (config) {
         processors: {
             '.js': new (require('./processor/java-script'))({}),
             '.css': new (require('./processor/cascading-style-sheets'))({
+                tailwind: {},
                 autoprefixer: {
                     grid: "autoplace",
                 },
