@@ -56,15 +56,17 @@ if multiple file requested, combine all request files.
 
 ### internal memo
 
-podman login docker.io
 podman build ./ -t docker.io/arimaryunosuke/assetter:latest
 podman run --rm\
+  --name assetter\
   -e ASSETTER_CONFIG=config\
   -v ./example/:/assetter/example\
   -p 8080:8080\
   docker.io/arimaryunosuke/assetter:latest /assetter/example
+^Ctrl+C
 
-podman push docker.io/arimaryunosuke/assetter:latest --format v2s2
+podman login docker.io
+podman push docker.io/arimaryunosuke/assetter:latest
 
 ### future task
 
