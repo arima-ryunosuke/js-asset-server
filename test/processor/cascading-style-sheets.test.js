@@ -8,7 +8,6 @@
 // - try  __dirname + '/../../node_modules'
 process.env.NODE_PATH = __dirname + '/../../node_modules';
 
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const processor = new (require('../../src/processor/cascading-style-sheets'))({
@@ -28,7 +27,7 @@ const processor = new (require('../../src/processor/cascading-style-sheets'))({
         ],
     },
 });
-const workdir = (os.tmpdir() + '/assetter-test/cascading-style-sheets').replace('\\', '/');
+const workdir = path.normalize((__dirname + '/../../.tmp/assetter-test/cascading-style-sheets')).replaceAll('\\', '/');
 const options = {
     rootdir: workdir,
     localdir: '/local',

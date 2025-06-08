@@ -74,20 +74,20 @@ module.exports = class {
         if (options.nocache) {
             delete this.constructor.metadata[altfile];
         }
-        const altmtime = Math.max(options.altmtime, ...await Promise.all((this.constructor.metadata[altfile]?.depends ?? []).map(v => fs.promises.mtime(v))));
-
-        if (!options.nocache && (await fs.promises.mtime(outfile) > altmtime)) {
-            options.logger.info(`skip ${altfile} (not modified)`);
-            return;
-        }
 
         const starttime = Date.now();
 
         // for cache
+        const altmtime = Math.max(...await Promise.all((this.constructor.metadata[altfile]?.depends ?? []).map(v => fs.promises.mtime(v))));
         if (!options.nocache && await fs.promises.mtime(cachefile) > altmtime) {
-            const value = JSON.parse((await fs.promises.readFile(cachefile)).toString());
-            options.logger.info(`cache ${altfile} (${Date.now() - starttime}ms)`);
-            return value;
+            try {
+                const value = JSON.parse((await fs.promises.readFile(cachefile)).toString());
+                value.cache = true;
+                return value;
+            }
+            catch (e) {
+                options.logger.warn(`broken cache ${cachefile} ${e}`);
+            }
         }
 
         // for compile
@@ -133,9 +133,8 @@ module.exports = class {
             altfile = [altfile];
         }
 
-        options.altmtime = Math.max(...await Promise.all(altfile.map(v => fs.promises.mtime(v))));
         const values = (await Promise.all(altfile.map(file => this.compile(file, options)))).filter(v => v);
-        if (!values.length) {
+        if (!values.length || values.every(v => v.cache)) {
             return;
         }
 

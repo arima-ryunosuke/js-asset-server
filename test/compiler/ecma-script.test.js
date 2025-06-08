@@ -1,8 +1,7 @@
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const compiler = new (require('../../src/compiler/ecma-script'))();
-const workdir = (os.tmpdir() + '/assetter-test/ecma-script').replace('\\', '/');
+const workdir = path.normalize((__dirname + '/../../.tmp/assetter-test/ecma-script')).replaceAll('\\', '/');
 const options = {
     runtime: {},
     nocache: true,

@@ -7,17 +7,17 @@ module.exports = class {
 
     async compile(input, options) {
         // https://sass-lang.com/documentation/js-api
-        const result = sass.renderSync({
-            outputStyle: options.minified ? 'compressed' : 'expanded',
-            file: input,
-            sourceMap: 'dummy',
-            omitSourceMapUrl: true,
-            sourceMapContents: true,
+        const result = await sass.compileAsync(input, {
+            style: options.minified ? 'compressed' : 'expanded',
+            sourceMap: true,
+            sourceMapIncludeSources: true,
         });
         return {
-            depends: result.stats.includedFiles,
-            content: result.css.toString() + "\n",
-            mapping: JSON.parse(result.map.toString()),
+            depends: result.loadedUrls
+                .filter(v => v.protocol === 'file:')
+                .map(url => process.platform === 'win32' ? url.pathname.substring(1) : url.pathname),
+            content: result.css + "\n",
+            mapping: result.sourceMap,
         };
     }
 };

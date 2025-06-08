@@ -1,8 +1,7 @@
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const compiler = new (require('../../src/compiler/stylus'))();
-const workdir = (os.tmpdir() + '/assetter-test/stylus').replace('\\', '/');
+const workdir = path.normalize((__dirname + '/../../.tmp/assetter-test/stylus')).replaceAll('\\', '/');
 const options = {
     // dummy
 };
@@ -21,7 +20,7 @@ test('compile stylus', async () => {
         "mappings": "AAAK;EAAK,OAAM,KAAN",
         "names": [],
         "sources": [
-            input.substring(2),
+            path.relative(workdir + '/../../../', input).replaceAll('\\', '/'),
         ],
         "sourcesContent": [
             "html{body{color:red}}",
@@ -42,7 +41,7 @@ test('compile stylus minify', async () => {
         "mappings": "AAAK,UAAK,MAAM",
         "names": [],
         "sources": [
-            input.substring(2),
+            path.relative(workdir + '/../../../', input).replaceAll('\\', '/'),
         ],
         "sourcesContent": [
             "html{body{color:red}}",

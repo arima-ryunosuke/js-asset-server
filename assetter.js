@@ -2,6 +2,8 @@
 
 const {fs, path} = require('./src/util');
 
+process.env.NODE_PATH = [process.env.NODE_PATH, __dirname + '/node_modules'].filter(v => v).join(path.delimiter);
+
 const filename = process.env.ASSETTER_CONFIG ?? 'assetter';
 const files = [`${filename}.js`, `${filename}.json`, `${filename}.dist.js`, `${filename}.dist.json`];
 const configFile = fs.detectSync(files, process.argv[2]) ?? process.argv[2];
