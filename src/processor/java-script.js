@@ -1,5 +1,5 @@
 module.exports = class {
-    modes = [];
+    modes = {};
 
     constructor(mode) {
         this.modes = mode;

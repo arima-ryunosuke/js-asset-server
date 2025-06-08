@@ -6,7 +6,7 @@ const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
 
 module.exports = class {
-    modes = [];
+    modes = {};
 
     constructor(mode) {
         this.modes = mode;
@@ -17,22 +17,11 @@ module.exports = class {
     }
 
     async process(value, options) {
-        if (!this.modes.length) {
-            return value;
-        }
-
         const postfuncs = [];
-        if (this.modes.includes('urlhash')) {
+
+        if (this.modes.urlhash) {
+            const supportedProps = this.modes.urlhash.supportedProps;
             postfuncs.push(function (css) {
-                const supportedProps = [
-                    'background',
-                    'background-image',
-                    'border-image',
-                    'behavior',
-                    'list-style',
-                    'src',
-                    'cursor',
-                ];
                 css.walkDecls(function (decl) {
                     if (supportedProps.includes(decl.prop)) {
                         decl.value = decl.value.replace(/url\s*\(\s*(['"])?([^'")]+)(['"])?\s*\)/gi, function (match, s, uri, e) {
@@ -55,12 +44,16 @@ module.exports = class {
                 });
             });
         }
-        if (this.modes.includes('autoprefixer')) {
-            postfuncs.push(autoprefixer({
-                grid: "autoplace",
+        if (this.modes.autoprefixer) {
+            postfuncs.push(autoprefixer(Object.assign({
                 overrideBrowserslist: options.browserslist,
-            }));
+            }, this.modes.autoprefixer)));
         }
+
+        if (postfuncs.length === 0) {
+            return value;
+        }
+
         const posted = await postcss(postfuncs).process(value.content, {
             from: value.filename,
             map: {

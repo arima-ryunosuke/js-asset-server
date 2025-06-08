@@ -31,8 +31,23 @@ module.exports = function (config) {
         },
         // postprocessor
         processors: {
-            '.js': new (require('./processor/java-script'))([]),
-            '.css': new (require('./processor/cascading-style-sheets'))(['urlhash', 'autoprefixer']),
+            '.js': new (require('./processor/java-script'))({}),
+            '.css': new (require('./processor/cascading-style-sheets'))({
+                autoprefixer: {
+                    grid: "autoplace",
+                },
+                urlhash: {
+                    supportedProps: [
+                        'background',
+                        'background-image',
+                        'border-image',
+                        'behavior',
+                        'list-style',
+                        'src',
+                        'cursor',
+                    ],
+                },
+            }),
         },
         // temporary directory (upload file, cache file, or etc)
         tmpdir: os.tmpdir(),

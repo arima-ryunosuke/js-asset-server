@@ -1,7 +1,22 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const processor = new (require('../../src/processor/cascading-style-sheets'))(['urlhash', 'autoprefixer']);
+const processor = new (require('../../src/processor/cascading-style-sheets'))({
+    autoprefixer: {
+        grid: "autoplace",
+    },
+    urlhash: {
+        supportedProps: [
+            'background',
+            'background-image',
+            'border-image',
+            'behavior',
+            'list-style',
+            'src',
+            'cursor',
+        ],
+    },
+});
 const workdir = (os.tmpdir() + '/assetter-test/cascading-style-sheets').replace('\\', '/');
 const options = {
     rootdir: workdir,
