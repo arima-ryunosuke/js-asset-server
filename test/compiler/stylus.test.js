@@ -21,12 +21,12 @@ test('compile stylus', async () => {
         "mappings": "AAAK;EAAK,OAAM,KAAN",
         "names": [],
         "sources": [
-            input.substring(2)
+            input.substring(2),
         ],
         "sourcesContent": [
-            "html{body{color:red}}"
+            "html{body{color:red}}",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 
@@ -42,11 +42,11 @@ test('compile stylus minify', async () => {
         "mappings": "AAAK,UAAK,MAAM",
         "names": [],
         "sources": [
-            input.substring(2)
+            input.substring(2),
         ],
         "sourcesContent": [
-            "html{body{color:red}}"
+            "html{body{color:red}}",
         ],
-        "version": 3
+        "version": 3,
     });
 });

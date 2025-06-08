@@ -12,7 +12,7 @@ module.exports = class {
             "@babel/env", {
                 modules: false,
                 targets: options.browserslist,
-            }
+            },
         ]];
         const plugins = [];
         if (options.runtime.js) {
@@ -28,9 +28,9 @@ module.exports = class {
                     Program: {
                         enter: function (path, file) {
                             path.unshiftContainer('body', babel.template(' "use transpile";')());
-                        }
-                    }
-                }
+                        },
+                    },
+                },
             });
         }
 

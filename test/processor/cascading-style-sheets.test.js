@@ -25,7 +25,7 @@ test('process', async () => {
         mapping: {
             "mappings": "",
             "sources": [],
-            "version": 3
+            "version": 3,
         },
     };
     const result = await processor.process(input, Object.assign({}, options));

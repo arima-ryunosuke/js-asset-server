@@ -94,7 +94,7 @@ module.exports = class {
         const value = await compiler.compile(altfile, options).catch(function (error) {
             options.logger.info(`fail ${altfile} (${Date.now() - starttime}ms)`);
             throw error;
-        })
+        });
         value.filename = outfile;
         value.mapping.file = path.join(options.localdir, path.relative(options.rootdir, outfile)).replace(/\\/g, '/');
         const relative = path.relative(options.rootdir, altfile);

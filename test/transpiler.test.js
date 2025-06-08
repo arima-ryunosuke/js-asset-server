@@ -16,7 +16,7 @@ const transpiler = new (require('../src/transpiler'))({
                     mapping: {
                         "mappings": "",
                         "sources": [],
-                        "version": 3
+                        "version": 3,
                     },
                 };
             }

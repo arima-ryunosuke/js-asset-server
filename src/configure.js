@@ -91,7 +91,8 @@ module.exports = function (config) {
     // @see https://github.com/paulmillr/chokidar
     if (config.daemons.fsd) {
         config.daemons.fsd = Object.assign({
-            awaitWriteFinish: true,}, config.daemons.fsd);
+            awaitWriteFinish: true,
+        }, config.daemons.fsd);
     }
 
     const routes = {};

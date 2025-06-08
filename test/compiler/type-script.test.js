@@ -24,12 +24,12 @@ test('compile ts', async () => {
         "names": [],
         "sourceRoot": undefined,
         "sources": [
-            "test.ts"
+            "test.ts",
         ],
         "sourcesContent": [
-            "() => 123"
+            "() => 123",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 
@@ -46,12 +46,12 @@ test('compile ts minify', async () => {
         "names": [],
         "sourceRoot": undefined,
         "sources": [
-            "test.ts"
+            "test.ts",
         ],
         "sourcesContent": [
-            "() => {/*comment*/ return 123; }"
+            "() => {/*comment*/ return 123; }",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 

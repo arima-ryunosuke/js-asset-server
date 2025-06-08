@@ -21,12 +21,12 @@ test('compile es', async () => {
         "mappings": "gBAAA,qBAAM,GAAG",
         "names": [],
         "sources": [
-            "test.es"
+            "test.es",
         ],
         "sourcesContent": [
-            "() => 123"
+            "() => 123",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 
@@ -40,12 +40,12 @@ test('compile es minify', async () => {
         "mappings": "gBAAA,WAAM,CAAa,MAAO,IAAG,CAAE,CAAC",
         "names": [],
         "sources": [
-            "test.es"
+            "test.es",
         ],
         "sourcesContent": [
-            "() => {/*comment*/ return 123; }"
+            "() => {/*comment*/ return 123; }",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 

@@ -30,9 +30,9 @@ test('compile scss', async () => {
         ],
         "sourcesContent": [
             "@import \"child\";\nhtml{body{color:$color}}",
-            "$color: #123456;"
+            "$color: #123456;",
         ],
-        "version": 3
+        "version": 3,
     });
 });
 
@@ -57,8 +57,8 @@ test('compile scss minify', async () => {
         ],
         "sourcesContent": [
             "@import \"child\";\nhtml{body{color:$color}}",
-            "$color: #123456;"
+            "$color: #123456;",
         ],
-        "version": 3
+        "version": 3,
     });
 });
