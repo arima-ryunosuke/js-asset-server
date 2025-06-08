@@ -18,7 +18,7 @@ test('compile es', async () => {
     expect(result.depends[0]).toEqual(input);
     expect(result.content).toEqual(`"use transpile";(function () {return 123;});`);
     expect(result.mapping).toEqual({
-        "mappings": "gBAAA,qBAAM,GAAN",
+        "mappings": "gBAAA,qBAAM,GAAG",
         "names": [],
         "sources": [
             "test.es"
@@ -37,7 +37,7 @@ test('compile es minify', async () => {
     expect(result.depends).toEqual([input]);
     expect(result.content).toEqual(`"use transpile";(function(){return 123;});`);
     expect(result.mapping).toEqual({
-        "mappings": "gBAAA,WAAM,CAAa,MAAO,IAAP,CAAa,CAAhC",
+        "mappings": "gBAAA,WAAM,CAAa,MAAO,IAAG,CAAE,CAAC",
         "names": [],
         "sources": [
             "test.es"

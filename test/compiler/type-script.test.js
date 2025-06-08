@@ -18,8 +18,11 @@ test('compile ts', async () => {
     expect(result.depends[0]).toEqual(input);
     expect(result.content).toEqual(`"use transpile";(function () {return 123;});`);
     expect(result.mapping).toEqual({
-        "mappings": "gBAAA,qBAAM,GAAN",
+        "file": undefined,
+        "ignoreList": [],
+        "mappings": "gBAAA,qBAAM,GAAG",
         "names": [],
+        "sourceRoot": undefined,
         "sources": [
             "test.ts"
         ],
@@ -37,8 +40,11 @@ test('compile ts minify', async () => {
     expect(result.depends).toEqual([input]);
     expect(result.content).toEqual(`"use transpile";(function(){return 123;});`);
     expect(result.mapping).toEqual({
-        "mappings": "gBAAA,WAAM,CAAa,MAAO,IAAP,CAAa,CAAhC",
+        "file": undefined,
+        "ignoreList": [],
+        "mappings": "gBAAA,WAAM,CAAa,MAAO,IAAG,CAAE,CAAC",
         "names": [],
+        "sourceRoot": undefined,
         "sources": [
             "test.ts"
         ],
